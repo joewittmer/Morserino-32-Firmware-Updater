@@ -1,13 +1,10 @@
 Morserino-32 standalone firmware update utility
-April 27,2000
+April 29, 2020
 
-Steps used to build script
+Steps used to build
 
 # Install python 3.7
 https://www.python.org/downloads
-
-# open a command propt in the project folder
-cd update_m32
 
 # Setup virtual envionment
 py -m venv venv
