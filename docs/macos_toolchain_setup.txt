@@ -1,15 +1,19 @@
 Morserino-32 standalone firmware update utility
-April 29, 2020
+May 1, 2020
 
-Steps used to build
+# Install anaconda
+https://www.anaconda.com/products/individual
 
-# Install python3
-$ brew install python3
+# Create virtual environment
+conda create -n m32 python=3.7.6 anaconda
+
+# Switch to virtual environment
+conda activate m32
 
 # Install dependencies
-pip3 install pyserial
-pip3 install esptool
-pip3 install pyinstaller
+conda install -n m32 pyserial
+conda install -n m32 -c conda-forge esptool
+conda install -n m32 pyinstaller
 
 # Create redistributable
 pyinstaller --onefile src/update_m32.py
