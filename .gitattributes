@@ -1,0 +1,11 @@
+# https://git-scm.com/docs/gitattributes
+
+* text=auto
+*.config        text
+*.gitattributes text
+*.gitignore     text
+*.json          text
+*.yml           text
+*.py            text
+
+*.dll           binary
