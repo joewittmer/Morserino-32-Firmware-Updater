@@ -16,4 +16,4 @@ conda install -n m32 -c conda-forge esptool
 conda install -n m32 pyinstaller
 
 # Create redistributable
-pyinstaller --onefile src/update_m32.py
+pyinstaller --clean -y --onefile --add-data "src/bin/*.bin:bin/" src/update_m32.py

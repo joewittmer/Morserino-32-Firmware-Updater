@@ -16,4 +16,4 @@ pip install esptool
 pip install pyinstaller
 
 # Create Windows redistributable
-pyinstaller --onefile src\update_m32.py
+pyinstaller --clean -y --onefile --add-data "src\bin\*.bin;bin" src\update_m32.py
