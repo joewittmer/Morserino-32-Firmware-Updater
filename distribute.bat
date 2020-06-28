@@ -1,0 +1,1 @@
+pyinstaller --clean -y --onefile --add-data "src\bin\*.bin;bin" src\update_m32.py
