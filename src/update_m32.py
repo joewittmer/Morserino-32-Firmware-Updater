@@ -46,7 +46,8 @@ def getEraseCommand(port, rate):
         '--baud', rate,
         '--before', 'default_reset',
         '--after', 'hard_reset',
-        'erase_flash' ]
+        'erase_flash' 
+    ]
 
 def eraseMorserino(port, rate):
     f = io.StringIO()
@@ -58,75 +59,106 @@ def eraseMorserino(port, rate):
     return s.count(writeConfirmation) == 1, s
 
 def showGeneralError(app):
-    print('Error...')
-    print('Please try again with the following command line options: ')
-    print('  ' + app + ' {serial_port} {rate} {file_path} erase')
-    print('Where: {rate} is 115200, 460800, or 921600')
-    print('       erase is optional; clears entire flash memory')
-    print()
+    e = [
+        'Error...',
+        'Please try again with the following command line options: ',
+        '  ' + app + ' {serial_port} {rate} {file_path} erase',
+        'Where: {rate} is 115200, 460800, or 921600',
+        '       erase is optional; clears entire flash memory',
+        ''
+    ]
+    print(*e, sep = '\n')
 
 def showRateError(rate):
-    print('Error...')
-    print('Unable to use rate ' + rate)
-    print('Please use 115200, 460800, or 921600')
-    print()
+    e = [ 
+        'Error...',
+        'Unable to use rate ' + rate,
+        'Please use 115200, 460800, or 921600',
+        ''
+    ]
+    print(*e, sep = '\n')
 
 def showPathError(path):
-    print('Error...')
-    print('Unable to open file path: ' + path)
-    print()
+    e = [
+        'Error...',
+        'Unable to open file path: ' + path,
+        ''
+    ]
+    print(*e, sep = '\n')
 
 def showUnexpectedError():
-    print('Error...')
-    print('An unexpected error occured. Please ask for assistance.')
-    print()
+    e = [
+        'Error...',
+        'An unexpected error occured. Please ask for assistance.',
+        ''
+    ]
+    print(*e, sep = '\n')
 
 def showAttemptingToUpdate(port, rate, path):
     filename = os.path.basename(path)
     filesize = os.path.getsize(path)
-    print('Attempting to update firmware')
-    print('  Port: ' + port)
-    print('  Rate: ' + rate)
-    print('  Firmware: ' + filename + ' (' + str(filesize) + ' bytes)')
-    print('Please wait...')
-    print()
+    e = [
+        'Attempting to update firmware',
+        '  Port: ' + port,
+        '  Rate: ' + rate,
+        '  Firmware: ' + filename + ' (' + str(filesize) + ' bytes)',
+        'Please wait...',
+        ''
+    ]
+    print(*e, sep = '\n')
     
 def showAttemptingToEraseFlash(port, rate):
-    filename = os.path.basename(path)
-    print('Attempting to erase flash')
-    print('  Port: ' + port)
-    print('  Rate: ' + rate)
-    print('Please wait...')
-    print()
+    e = [
+        'Attempting to erase flash',
+        '  Port: ' + port,
+        '  Rate: ' + rate,
+        'Please wait...',
+        ''
+    ]
+    print(*e, sep = '\n')
     
 def showEraseSuccess():
-    print('Chip was erased successfully')
-    print()
+    e = [
+        'Chip was erased successfully'
+        ''
+    ]
+    print(*e, sep = '\n')
 
 def showEraseFailure(info):
-    print(info)
-    print()
-    print('Error...')
-    print('Chip erase failed. Please ask for assistance providing the console output.')
-    print()
+    e = [
+        info,
+        '',
+        'Error...',
+        'Chip erase failed. Please ask for assistance providing the console output.'
+    ]
+    print(*e, sep = '\n')
 
 def showSuccess():
-    print('Firmware was updated successfully')
-    print()
+    s = [
+        'Firmware was updated successfully',
+        ''
+    ]
+    print(*s, sep = '\n')
     
 def showFileSystemSetupWarning():
-    print('Setting up SPIFFS file system')
-    print('Please wait...')
+    w = [
+        'Setting up SPIFFS file system',
+        'Please wait...'
+        ''
+    ]
+    print(*w, sep = '\n')
     time.sleep(40)
-    print()
 
 def showFailure(info):
-    print()
-    print(info)
-    print()
-    print('Error...')
-    print('Firmware update failed. Please ask for assistance providing the console output.')
-    print()
+    e = [
+        '',
+        info,
+        '',
+        'Error...',
+        'Firmware update failed. Please ask for assistance providing the console output.',
+        ''
+    ]
+    print(*e, sep = '\n')
 
 def getRateExists(rate):
     rates = ['115200', '460800', '921600']
@@ -136,48 +168,52 @@ def getPathExists(path):
     return os.path.exists(path)
 
 def showBanner(version):
-    print()
-    print('Welcome to Morserino-32 USB Firmware Updater v' + version)
-    print()
+    b = [
+        '',
+        'Welcome to Morserino-32 USB Firmware Updater v' + version,
+        ''
+    ]
+    print(*b, sep = '\n')
 
 def main(port, rate, path, eraseFlash):
     showBanner(__version__)
-    if getRateExists(rate):
-        if getPathExists(path):
-            if eraseFlash:
-                showAttemptingToEraseFlash(port, rate)
-                try:
-                    result, info = eraseMorserino(port, rate)
-                    if result:
-                        showEraseSuccess()
-                        showAttemptingToUpdate(port, rate, path)
-                        try:
-                            result, info = updateMorserino(port, rate, path)
-                            if result:
-                                showFileSystemSetupWarning()
-                                showSuccess()
-                            else:
-                                showFailure(info)
-                        except:
-                            showUnexpectedError()
-                    else:
-                        showEraseFailure(info);
-                except:
-                    showUnexpectedError()
-            else:
+
+    if getRateExists(rate) and getPathExists(path) and eraseFlash:
+        showAttemptingToEraseFlash(port, rate)
+        try:
+            result, info = eraseMorserino(port, rate)
+            if result:
+                showEraseSuccess()
                 showAttemptingToUpdate(port, rate, path)
                 try:
                     result, info = updateMorserino(port, rate, path)
                     if result:
+                        showFileSystemSetupWarning()
                         showSuccess()
                     else:
                         showFailure(info)
                 except:
                     showUnexpectedError()
-        else:
-            showPathError(path)
-    else:
+            else:
+                showEraseFailure(info);
+        except:
+            showUnexpectedError()
+
+    elif getRateExists(rate) and getPathExists(path):
+        showAttemptingToUpdate(port, rate, path)
+        try:
+            result, info = updateMorserino(port, rate, path)
+            if result:
+                showSuccess()
+            else:
+                showFailure(info)
+        except:
+            showUnexpectedError()
+    elif not getRateExists(rate):
         showRateError()
+    elif not getPathExists(path):
+        showPathError(path)
+
 
 if __name__ == '__main__':
     app = sys.argv[0]
