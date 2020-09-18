@@ -203,15 +203,12 @@ def main(port, rate, path, eraseFlash):
             if result:
                 showEraseSuccess()
                 showAttemptingToUpdate(port, rate, path)
-                try:
-                    result, info = updateMorserino(port, rate, path)
-                    if result:
-                        showFileSystemSetupWarning()
-                        showSuccess()
-                    else:
-                        showFailure(info)
-                except:
-                    showUnexpectedError()
+                result, info = updateMorserino(port, rate, path)
+                if result:
+                    showFileSystemSetupWarning()
+                    showSuccess()
+                else:
+                    showFailure(info)
             else:
                 showEraseFailure(info)
         except:
