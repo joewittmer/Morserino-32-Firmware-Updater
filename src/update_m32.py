@@ -88,10 +88,16 @@ def showGeneralError(app):
     e = [
         "Error...",
         "Please try again with the following command line options: ",
-        "  " + app + " {serial_port} {rate} {file_path} erase",
-        "Where: {rate} is 115200, 460800, or 921600",
-        "       erase is optional; clears entire flash memory",
+        "  " + app + " 'serial_port' 'rate' 'file_path' erase",
         "",
+        "Note: 'rate' options are 115200, 460800, or 921600",
+        "      erase is optional; clears entire flash memory",
+        "",
+        "macOS example:",
+        "./update_m32 /dev/tty.SLAB_USBtoUART 921600 morse_3_v3.0.ino.wifi_lora_32_V2.bin erase",
+        "",
+        "Windows example:",
+        "update_m32.exe COM5 921600 morse_3_v3.0.ino.wifi_lora_32_V2.bin erase",
     ]
     print(*e, sep="\n")
 
