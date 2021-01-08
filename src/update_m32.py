@@ -73,7 +73,6 @@ def getEraseCommand(port, rate):
         "erase_flash",
     ]
 
-
 def eraseMorserino(port, rate):
     f = io.StringIO()
     with redirect_stdout(f):
@@ -113,12 +112,20 @@ def showRateError(rate):
 
 
 def showPathError(path):
-    e = ["Error...", "Unable to open file path: " + path, ""]
+    e = [
+        "Error...",
+        "Unable to open file path: " + path,
+        ""
+    ]
     print(*e, sep="\n")
 
 
 def showUnexpectedError():
-    e = ["Error...", "An unexpected error occured. Please ask for assistance.", ""]
+    e = [
+        "Error...",
+        "An unexpected error occured. Please ask for assistance.",
+        ""
+    ]
     print(*e, sep="\n")
 
 
@@ -148,7 +155,10 @@ def showAttemptingToEraseFlash(port, rate):
 
 
 def showEraseSuccess():
-    e = ["Chip was erased successfully" ""]
+    e = [
+        "Chip was erased successfully",
+        ""
+    ]
     print(*e, sep="\n")
 
 
@@ -163,12 +173,19 @@ def showEraseFailure(info):
 
 
 def showSuccess():
-    s = ["Firmware was updated successfully", ""]
+    s = [
+        "Firmware was updated successfully",
+        ""
+    ]
     print(*s, sep="\n")
 
 
 def showFileSystemSetupWarning():
-    w = ["Setting up SPIFFS file system", "Please wait..." ""]
+    w = [
+        "Setting up SPIFFS file system",
+        "Please wait...",
+        ""
+    ]
     print(*w, sep="\n")
     time.sleep(40)
 
@@ -186,7 +203,11 @@ def showFailure(info):
 
 
 def getRateExists(rate):
-    rates = ["115200", "460800", "921600"]
+    rates = [
+        "115200",
+        "460800",
+        "921600"
+    ]
     return rate in rates
 
 
@@ -195,7 +216,11 @@ def getPathExists(path):
 
 
 def showBanner(version):
-    b = ["", "Welcome to Morserino-32 USB Firmware Updater v" + version, ""]
+    b = [
+        "",
+        "Welcome to Morserino-32 USB Firmware Updater v" + version,
+        ""
+    ]
     print(*b, sep="\n")
 
 
