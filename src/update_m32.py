@@ -8,16 +8,16 @@ import os
 import time
 
 # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile/13790741#13790741
-def resourcePath(relative_path):
+def get_resource_path(relative_path):
     base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
 
-def getUpdateCommand(port, rate, path):
-    otadata = resourcePath("bin/boot_app0.bin")
-    bootloader = resourcePath("bin/bootloader_qio_80m.bin")
+def get_update_command(port, rate, path):
+    otadata = get_resource_path("bin/boot_app0.bin")
+    bootloader = get_resource_path("bin/bootloader_qio_80m.bin")
     app = path
-    partitionTable = resourcePath("bin/morse_3_v3.0.ino.partitions.bin")
+    partitionTable = get_resource_path("bin/morse_3_v3.0.ino.partitions.bin")
 
     return [
         "--chip",
@@ -47,17 +47,17 @@ def getUpdateCommand(port, rate, path):
     ]
 
 
-def updateMorserino(port, rate, path):
+def update_morserino(port, rate, path):
     f = io.StringIO()
     with redirect_stdout(f):
-        command = getUpdateCommand(port, rate, path)
+        command = get_update_command(port, rate, path)
         esptool.main(command)
     s = f.getvalue().rstrip()
     writeConfirmation = "Hash of data verified."
     return s.count(writeConfirmation) == 4, s
 
 
-def getEraseCommand(port, rate):
+def get_erase_command(port, rate):
     return [
         "--chip",
         "esp32",
@@ -73,10 +73,10 @@ def getEraseCommand(port, rate):
     ]
 
 
-def eraseMorserino(port, rate):
+def erase_morserino(port, rate):
     f = io.StringIO()
     with redirect_stdout(f):
-        command = getEraseCommand(port, rate)
+        command = get_erase_command(port, rate)
         esptool.main(command)
     s = f.getvalue().rstrip()
     writeConfirmation = "Chip erase completed successfully"
@@ -88,7 +88,7 @@ def show(text):
     print("")
 
 
-def showGeneralError(app):
+def show_general_error(app):
     filename = os.path.basename(app)
     msg = [
         " Error...",
@@ -102,7 +102,7 @@ def showGeneralError(app):
     show(msg)
 
 
-def showRateError(rate):
+def show_rate_error(rate):
     msg = [
         "Error...",
         "Unable to use rate " + rate,
@@ -111,12 +111,12 @@ def showRateError(rate):
     show(msg)
 
 
-def showPathError(path):
+def show_path_error(path):
     msg = ["Error...", "Unable to open file path: " + path]
     show(msg)
 
 
-def showUnexpectedError():
+def show_unexpected_error():
     msg = [
         "Error...",
         "An unexpected error occured. Please ask for assistance.",
@@ -124,7 +124,7 @@ def showUnexpectedError():
     show(msg)
 
 
-def showAttemptingToUpdate(port, rate, path):
+def show_attempting_to_update(port, rate, path):
     filename = os.path.basename(path)
     filesize = os.path.getsize(path)
 
@@ -138,7 +138,7 @@ def showAttemptingToUpdate(port, rate, path):
     show(msg)
 
 
-def showAttemptingToEraseFlash(port, rate):
+def show_attempting_to_erase_flash(port, rate):
     msg = [
         "Attempting to erase flash",
         "  Port: " + port,
@@ -148,12 +148,12 @@ def showAttemptingToEraseFlash(port, rate):
     show(msg)
 
 
-def showEraseSuccess():
+def show_erase_success():
     msg = ["Chip was erased successfully"]
     show(msg)
 
 
-def showEraseFailure(info):
+def show_erase_failure(info):
     msg = [
         info,
         "Error...",
@@ -162,17 +162,17 @@ def showEraseFailure(info):
     show(msg)
 
 
-def showSuccess():
+def show_success():
     msg = ["Firmware was updated successfully", ""]
     show(msg)
 
 
-def showFileSystemSetupWarning():
+def show_file_system_setup_warning():
     msg = ["Setting up SPIFFS file system", "Please wait...", ""]
     show(msg)
 
 
-def showFailure(info):
+def show_failure(info):
     msg = [
         info,
         "Error...",
@@ -181,59 +181,59 @@ def showFailure(info):
     show(msg)
 
 
-def getRateExists(rate):
+def get_rate_exists(rate):
     rates = ["115200", "460800", "921600"]
     return rate in rates
 
 
-def getPathExists(path):
+def get_path_exists(path):
     return os.path.exists(path)
 
 
-def showBanner(version):
+def show_banner(version):
     msg = ["Welcome to Morserino-32 USB Firmware Updater v" + version, ""]
     show(msg)
 
 
 def main(port, rate, path, eraseFlash):
-    showBanner(__version__)
-    if getRateExists(rate):
-        if getPathExists(path):
+    show_banner(__version__)
+    if get_rate_exists(rate):
+        if get_path_exists(path):
             if eraseFlash:
-                showAttemptingToEraseFlash(port, rate)
+                show_attempting_to_erase_flash(port, rate)
                 try:
-                    result, info = eraseMorserino(port, rate)
+                    result, info = erase_morserino(port, rate)
                     if result:
-                        showEraseSuccess()
-                        showAttemptingToUpdate(port, rate, path)
+                        show_erase_success()
+                        show_attempting_to_update(port, rate, path)
                         try:
-                            result, info = updateMorserino(port, rate, path)
+                            result, info = update_morserino(port, rate, path)
                             if result:
-                                showFileSystemSetupWarning()
+                                show_file_system_setup_warning()
                                 time.sleep(40)
-                                showSuccess()
+                                show_success()
                             else:
-                                showFailure(info)
+                                show_failure(info)
                         except:
-                            showUnexpectedError()
+                            show_unexpected_error()
                     else:
-                        showEraseFailure(info)
+                        show_erase_failure(info)
                 except:
-                    showUnexpectedError()
+                    show_unexpected_error()
             else:
-                showAttemptingToUpdate(port, rate, path)
+                show_attempting_to_update(port, rate, path)
                 try:
-                    result, info = updateMorserino(port, rate, path)
+                    result, info = update_morserino(port, rate, path)
                     if result:
-                        showSuccess()
+                        show_success()
                     else:
-                        showFailure(info)
+                        show_failure(info)
                 except:
-                    showUnexpectedError()
+                    show_unexpected_error()
         else:
-            showPathError(path)
+            show_path_error(path)
     else:
-        showRateError()
+        show_rate_error()
 
 
 if __name__ == "__main__":
@@ -247,9 +247,9 @@ if __name__ == "__main__":
                 eraseFlash = True
                 main(port, rate, path, eraseFlash)
             else:
-                showGeneralError(app)
+                show_general_error(app)
         else:
             eraseFlash = False
             main(port, rate, path, eraseFlash)
     else:
-        showGeneralError(app)
+        show_general_error(app)
