@@ -175,7 +175,7 @@ def show_file_system_setup_warning():
     show(msg)
 
 
-def show_failure(info):
+def show_flash_failure(info):
     msg = [
         info,
         "Error...",
@@ -216,7 +216,7 @@ def main(port, rate, path, eraseFlash):
                                 time.sleep(40)
                                 show_success()
                             else:
-                                show_failure(info)
+                                show_flash_failure(info)
                         except Exception as ex:
                             show_unexpected_error(ex)
                     else:
@@ -230,7 +230,7 @@ def main(port, rate, path, eraseFlash):
                     if result:
                         show_success()
                     else:
-                        show_failure(info)
+                        show_flash_failure(info)
                 except Exception as ex:
                     show_unexpected_error(ex)
         else:
