@@ -93,35 +93,42 @@ def show(text):
 def show_general_error(app):
     filename = os.path.basename(app)
     msg = [
-        " Error...",
+        "Error:",
         "",
-        " Please try again with the following command line options: ",
-        "  " + filename + " {serial_port} {rate} {file_path} erase",
+        "Please try again with the following command line options: ",
+        " " + filename + " {serial_port} {rate} {file_path} erase",
         "",
-        " Where: {rate} is 115200, 460800, or 921600",
-        "         erase is optional; clears entire flash memory",
+        "Where: {rate} is 115200, 460800, or 921600",
+        "        erase is optional; clears entire flash memory",
     ]
     show(msg)
 
 
 def show_rate_error(rate):
     msg = [
-        "Error...",
+        "Error:",
         "Unable to use rate " + rate,
+        "",
         "Please use 115200, 460800, or 921600",
     ]
     show(msg)
 
 
 def show_path_error(path):
-    msg = ["Error...", "Unable to open file path: " + path]
+    msg = [
+        "Error:",
+        "Unable to open file at: " + path,
+        "",
+        "Please check filename and path",
+    ]
     show(msg)
 
 
 def show_unexpected_error(ex):
     msg = [
+        "Error: ",
         ex,
-        "Error...",
+        "",
         "An unexpected error occured. Please ask for assistance.",
     ]
     show(msg)
@@ -146,6 +153,7 @@ def show_attempting_to_erase_flash(port, rate):
         "Attempting to erase flash",
         "  Port: " + port,
         "  Rate: " + rate,
+        "",
         "Please wait...",
     ]
     show(msg)
@@ -158,27 +166,33 @@ def show_erase_success():
 
 def show_erase_failure(info):
     msg = [
+        "Error:",
         info,
-        "Error...",
+        "",
         "Chip erase failed. Please ask for assistance.",
     ]
     show(msg)
 
 
 def show_success():
-    msg = ["Firmware was updated successfully", ""]
+    msg = ["Firmware was updated successfully"]
     show(msg)
 
 
 def show_file_system_setup_warning():
-    msg = ["Setting up SPIFFS file system", "Please wait...", ""]
+    msg = [
+        "Setting up SPIFFS file system",
+        "",
+        "Please wait...",
+    ]
     show(msg)
 
 
 def show_flash_failure(info):
     msg = [
+        "Error: ",
         info,
-        "Error...",
+        "",
         "Firmware update failed. Please ask for assistance.",
     ]
     show(msg)
