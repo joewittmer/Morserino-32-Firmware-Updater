@@ -194,7 +194,7 @@ def get_path_exists(path):
 
 
 def show_banner(version):
-    msg = ["Welcome to Morserino-32 USB Firmware Updater v" + version, ""]
+    msg = ["", "Welcome to Morserino-32 USB Firmware Updater v" + version]
     show(msg)
 
 
