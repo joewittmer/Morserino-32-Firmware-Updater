@@ -7,10 +7,12 @@ import io
 import os
 import time
 
+
 # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile/13790741#13790741
 def get_resource_path(relative_path):
-    base_path = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base_path, relative_path)
+    dir = os.path.dirname(os.path.abspath(__file__))
+    base = getattr(sys, "_MEIPASS", dir)
+    return os.path.join(base, relative_path)
 
 
 def get_update_command(port, rate, path):
@@ -116,8 +118,9 @@ def show_path_error(path):
     show(msg)
 
 
-def show_unexpected_error():
+def show_unexpected_error(ex):
     msg = [
+        ex,
         "Error...",
         "An unexpected error occured. Please ask for assistance.",
     ]
@@ -157,7 +160,7 @@ def show_erase_failure(info):
     msg = [
         info,
         "Error...",
-        "Chip erase failed. Please ask for assistance providing the console output.",
+        "Chip erase failed. Please ask for assistance.",
     ]
     show(msg)
 
@@ -176,7 +179,7 @@ def show_failure(info):
     msg = [
         info,
         "Error...",
-        "Firmware update failed. Please ask for assistance providing the console output.",
+        "Firmware update failed. Please ask for assistance.",
     ]
     show(msg)
 
@@ -214,12 +217,12 @@ def main(port, rate, path, eraseFlash):
                                 show_success()
                             else:
                                 show_failure(info)
-                        except:
-                            show_unexpected_error()
+                        except Exception as ex:
+                            show_unexpected_error(ex)
                     else:
                         show_erase_failure(info)
-                except:
-                    show_unexpected_error()
+                except Exception as ex:
+                    show_unexpected_error(ex)
             else:
                 show_attempting_to_update(port, rate, path)
                 try:
@@ -228,8 +231,8 @@ def main(port, rate, path, eraseFlash):
                         show_success()
                     else:
                         show_failure(info)
-                except:
-                    show_unexpected_error()
+                except Exception as ex:
+                    show_unexpected_error(ex)
         else:
             show_path_error(path)
     else:
