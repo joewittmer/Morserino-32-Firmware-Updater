@@ -20,8 +20,11 @@ jobs:
 
     steps:
       - uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: update-m32
+
+      - name: Activate environment
+        run: |
+          conda env create
+          conda activate update-m32
 
       - name: Conda info
         run: conda info
