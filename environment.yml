@@ -4,6 +4,6 @@ channels:
 - defaults
 dependencies:
 - python=3.7
-- esptool
-- pyserial
-- pyinstaller
+- esptool=2.8
+- pyserial=3.5
+- pyinstaller=4.5.1
