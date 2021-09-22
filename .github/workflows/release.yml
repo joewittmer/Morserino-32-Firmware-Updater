@@ -92,7 +92,7 @@ jobs:
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: |
           mkdir archive
-          zip ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip ./dist/${{ matrix.exe_name }} 
+          zip -j ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip ./dist/${{ matrix.exe_name }} 
 
       - name: Zip build artifacts for windows
         shell: powershell
