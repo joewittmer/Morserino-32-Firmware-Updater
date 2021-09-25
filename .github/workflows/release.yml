@@ -39,6 +39,7 @@ jobs:
             exe_name: update_m32.exe
             mime: application/zip
     steps:
+      - name: Checkout code
       - uses: actions/checkout@v1
 
       - name: Set up Python 3.7
