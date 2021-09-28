@@ -38,27 +38,21 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            app: update_m32
-            target: macos
-            type: cli
+            target: macos-cli-update_m32
             conda_path: $CONDA/bin
             assets: src/bin/*.bin:bin/
             exe_name: update_m32
             mime: application/zip
 
           - os: ubuntu-latest
-            app: update_m32
-            target: ubuntu
-            type: cli
+            target: ubuntu-cli-update_m32
             conda_path: $CONDA/bin
             assets: src/bin/*.bin:bin/
             exe_name: update_m32
             mime: application/zip
 
           - os: windows-latest
-            app: update_m32
-            target: windows
-            type: cli
+            target: windows-cli-update_m32
             conda_path: $CONDA/Scripts
             assets: src/bin/*.bin;bin/
             exe_name: update_m32.exe
@@ -118,20 +112,20 @@ jobs:
         if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
         run: |
           mkdir archive
-          zip -j ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip ./dist/${{ matrix.exe_name }} 
+          zip -j ./archive/${{ matrix.target }}-v${{ env.RELEASE_VERSION }}.zip ./dist/${{ matrix.exe_name }} 
 
       - name: Zip build artifacts for windows
         shell: powershell
         if: matrix.os == 'windows-latest'
         run: |
           mkdir archive
-          Compress-Archive -DestinationPath ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip -Path ./dist/${{ matrix.exe_name }}
+          Compress-Archive -DestinationPath ./archive/${{ matrix.target }}-v${{ env.RELEASE_VERSION }}.zip -Path ./dist/${{ matrix.exe_name }}
 
       - name: Upload artifacts to workspace
         uses: actions/upload-artifact@v1
         with:
           name: artifacts
-          path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
+          path: ${{ github.workspace }}/archive/${{ matrix.target }}-v${{ env.RELEASE_VERSION }}.zip
   
       - name: Load release url file from release job
         uses: actions/download-artifact@v1
@@ -152,7 +146,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
-          asset_name: ${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
+          asset_path: ${{ github.workspace }}/archive/${{ matrix.target }}-v${{ env.RELEASE_VERSION }}.zip
+          asset_name: ${{ matrix.target }}-v${{ env.RELEASE_VERSION }}.zip
           asset_content_type: ${{ matrix.mime}}
  
