@@ -1,5 +1,6 @@
 __version__ = "0.0.7"
 
+import argparse
 import io
 import os
 import sys
@@ -92,69 +93,65 @@ def show(text):
     print("")
 
 
-def show_general_error(app):
-    filename = os.path.basename(app)
+def show_missing_required_args_error(app):
     msg = [
-        "Error:",
+        "Error: Missing required command line arguements.",
         "",
-        "Please try again with the following command line options: ",
-        " " + filename + " {serial_port} {rate} {file_path} erase",
+        "For help, please run:",
         "",
-        "Where: {rate} is 115200, 460800, or 921600",
-        "        erase is optional; clears entire flash memory",
+        app + " --help",
+        "",
     ]
     show(msg)
 
 
-def show_rate_error(rate):
+def show_baud_error(baud):
     msg = [
-        "Error:",
-        "Unable to use rate " + rate,
+        "Error: Unable to use baud " + baud,
         "",
-        "Please use 115200, 460800, or 921600",
+        "Please use 115200, 460800, or 921600.",
     ]
     show(msg)
 
 
 def show_path_error(path):
     msg = [
-        "Error:",
-        "Unable to open file at: " + path,
+        "Error: Unable to open file at " + path,
         "",
-        "Please check filename and path",
+        "Please check file name and path.",
     ]
     show(msg)
 
 
 def show_unexpected_error(ex):
     msg = [
-        "Error: ",
-        ex,
+        "Error: An unexpected error occured " + ex,
         "",
-        "An unexpected error occured. Please ask for assistance.",
+        "Please ask for assistance.",
     ]
     show(msg)
 
 
-def show_attempting_to_update(port, rate, path):
+def show_attempting_to_update(device, baud, path):
     filename = os.path.basename(path)
     filesize = os.path.getsize(path)
 
     msg = [
         "Attempting to update firmware",
-        "  Port: " + port,
-        "  Rate: " + rate,
+        "  Device: " + device,
+        "  Baud: " + baud,
         "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
+        "",
         "Please wait...",
     ]
     show(msg)
 
 
-def show_attempting_to_erase_flash(port, rate):
+def show_attempting_to_erase_flash(device, baud):
     msg = [
         "Attempting to erase flash",
-        "  Port: " + port,
-        "  Rate: " + rate,
+        "  Device: " + device,
+        "  Baud: " + baud,
         "",
         "Please wait...",
     ]
@@ -162,14 +159,13 @@ def show_attempting_to_erase_flash(port, rate):
 
 
 def show_erase_success():
-    msg = ["Chip was erased successfully"]
+    msg = ["Chip was erased successfully."]
     show(msg)
 
 
 def show_erase_failure(info):
     msg = [
-        "Error:",
-        info,
+        "Error: " + info,
         "",
         "Chip erase failed. Please ask for assistance.",
     ]
@@ -177,13 +173,13 @@ def show_erase_failure(info):
 
 
 def show_success():
-    msg = ["Firmware was updated successfully"]
+    msg = ["Firmware was updated successfully."]
     show(msg)
 
 
 def show_file_system_setup_warning():
     msg = [
-        "Setting up SPIFFS file system",
+        "Setting up SPIFFS file system.",
         "",
         "Please wait...",
     ]
@@ -192,17 +188,16 @@ def show_file_system_setup_warning():
 
 def show_flash_failure(info):
     msg = [
-        "Error: ",
-        info,
+        "Error: " + info,
         "",
         "Firmware update failed. Please ask for assistance.",
     ]
     show(msg)
 
 
-def get_rate_exists(rate):
-    rates = ["115200", "460800", "921600"]
-    return rate in rates
+def get_baud_exists(baud):
+    bauds = ["115200", "460800", "921600"]
+    return baud in bauds
 
 
 def get_path_exists(path):
@@ -214,11 +209,11 @@ def show_banner(version):
     show(msg)
 
 
-def erase_flash(port, rate):
-    show_attempting_to_erase_flash(port, rate)
+def erase_flash(device, baud):
+    show_attempting_to_erase_flash(device, baud)
     result = True
     try:
-        result, info = erase_morserino(port, rate)
+        result, info = erase_morserino(device, baud)
         if not result:
             show_erase_failure(info)
             result = False
@@ -228,11 +223,11 @@ def erase_flash(port, rate):
     return result
 
 
-def update_firmware(port, rate, path):
-    show_attempting_to_update(port, rate, path)
+def update_firmware(device, baud, path):
+    show_attempting_to_update(device, baud, path)
     result = True
     try:
-        result, info = update_morserino(port, rate, path)
+        result, info = update_morserino(device, baud, path)
         if not result:
             show_flash_failure(info)
             result = False
@@ -243,13 +238,67 @@ def update_firmware(port, rate, path):
     return result
 
 
-def main(port, rate, path, eraseFlash):
-    show_banner(__version__)
+def create_args_parser(app_version):
+    parser = argparse.ArgumentParser(add_help=False)
+
+    help = parser.add_argument_group("Help arguments")
+    help.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        default=argparse.SUPPRESS,
+        help="Show this help message and exit.",
+    )
+    help.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=app_version,
+        help="Show this program's version number and exit.",
+    )
+
+    required = parser.add_argument_group("Required arguments")
+    required.add_argument(
+        "-p", "--port", type=str, help="Specify the USB serial port device name."
+    )
+    required.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        help="Specify the path to the firmware .bin file to upload.",
+    )
+
+    optional = parser.add_argument_group("Optional arguments")
+    optional.add_argument(
+        "-b",
+        "--baud",
+        type=str,
+        default="921600",
+        help="Include to set baud rate when updating. Valid options are 115200, 460800, or 921600. Default is 921600.",
+    )
+    optional.add_argument(
+        "-e",
+        "--erase",
+        action="store_true",
+        default=False,
+        help="Include to erase the memory before updating.",
+    )
+    return parser
+
+
+def parse_args(parser):
+    args = parser.parse_args()
+    arg_pairs = args._get_kwargs()
+    result = not any(x is None for _, x in arg_pairs)
+    return (result, args)
+
+
+def main(device, baud, path, eraseFlash):
 
     carryOn = True
 
-    if not get_rate_exists(rate):
-        show_rate_error(rate)
+    if not get_baud_exists(baud):
+        show_baud_error(baud)
         carryOn = False
 
     if not get_path_exists(path):
@@ -257,10 +306,10 @@ def main(port, rate, path, eraseFlash):
         carryOn = False
 
     if carryOn and eraseFlash:
-        carryOn = erase_flash(port, rate)
+        carryOn = erase_flash(device, baud)
 
     if carryOn:
-        carryOn = update_firmware(port, rate, path)
+        carryOn = update_firmware(device, baud, path)
 
     if carryOn:
         if eraseFlash:
@@ -270,19 +319,12 @@ def main(port, rate, path, eraseFlash):
 
 
 if __name__ == "__main__":
+    show_banner(__version__)
     app = sys.argv[0]
-    if len(sys.argv) > 3:
-        port = sys.argv[1]
-        rate = sys.argv[2]
-        path = sys.argv[3]
-        if len(sys.argv) > 4:
-            if sys.argv[4].lower() == "erase":
-                eraseFlash = True
-                main(port, rate, path, eraseFlash)
-            else:
-                show_general_error(app)
-        else:
-            eraseFlash = False
-            main(port, rate, path, eraseFlash)
+    parser = create_args_parser(__version__)
+    result, args = parse_args(parser)
+
+    if not result:
+        show_missing_required_args_error(app)
     else:
-        show_general_error(app)
+        main(args.port, args.baud, args.file, args.erase)
