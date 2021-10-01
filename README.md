@@ -9,6 +9,8 @@ The [Morserino-32](http://www.morserino.info/morserino-32.html) is a multi-funct
 
 Please follow the step-by-step instructions provided in Appendix 4 of the [Morserino-32 Manual](https://github.com/oe1wkl/Morserino-32/tree/master/Documentation/User%20Manual).
 
+The binary release files are availble to download [here](https://github.com/joewittmer/Morserino-32-Firmware-Updater/tree/master/release).
+
 
 ## Instructions for full factory erase
 
@@ -17,13 +19,13 @@ To fully erase the Morserino-32, please follow the step-by-step instructions pro
 macOS example:
 
 ```
-./update_m32 /dev/tty.SLAB_USBtoUART 921600 morse_3_v3.0.ino.wifi_lora_32_V2.bin erase
+./update_m32 -p /dev/tty.usbserial-0001 -f m32_v4.0.1.ino.wifi_lora_32_V2.bin -e
 ```
 
 Windows example:
 
 ```
-update_m32.exe COM5 921600 morse_3_v3.0.ino.wifi_lora_32_V2.bin erase
+update_m32.exe -p COM5 -f m32_v4.0.1.ino.wifi_lora_32_V2.bin -e
 ```
 
 
