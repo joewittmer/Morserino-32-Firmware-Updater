@@ -19,13 +19,13 @@ To fully erase the Morserino-32, please follow the step-by-step instructions pro
 macOS example:
 
 ```
-./update_m32 -p /dev/tty.usbserial-0001 -f m32_v4.0.1.ino.wifi_lora_32_V2.bin -e
+./update_m32 -p /dev/tty.usbserial-0001 -f m32_v4.1.ino.wifi_lora_32_V2.bin -e
 ```
 
 Windows example:
 
 ```
-update_m32.exe -p COM5 -f m32_v4.0.1.ino.wifi_lora_32_V2.bin -e
+update_m32.exe -p COM5 -f m32_v4.1.ino.wifi_lora_32_V2.bin -e
 ```
 
 
