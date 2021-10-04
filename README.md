@@ -9,7 +9,7 @@ The [Morserino-32](http://www.morserino.info/morserino-32.html) is a multi-funct
 
 Please follow the step-by-step instructions provided in Appendix 4 of the [Morserino-32 Manual](https://github.com/oe1wkl/Morserino-32/tree/master/Documentation/User%20Manual).
 
-The binary release files are availble to download [here](https://github.com/joewittmer/Morserino-32-Firmware-Updater/tree/master/release).
+The binary release files are available to download [here](https://github.com/joewittmer/Morserino-32-Firmware-Updater/tree/master/release).
 
 
 ## Instructions for full factory erase
