@@ -137,7 +137,7 @@ def show_attempting_to_update(device, baud, path):
     filesize = os.path.getsize(path)
 
     msg = [
-        "Attempting to update firmware",
+        "Updating firmware",
         "  Device: " + device,
         "  Baud: " + baud,
         "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
@@ -149,7 +149,7 @@ def show_attempting_to_update(device, baud, path):
 
 def show_attempting_to_erase_flash(device, baud):
     msg = [
-        "Attempting to erase flash",
+        "Erasing flash",
         "  Device: " + device,
         "  Baud: " + baud,
         "",
