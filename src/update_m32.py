@@ -132,13 +132,13 @@ def show_unexpected_error(ex):
     show(msg)
 
 
-def show_attempting_to_update(device, baud, path):
+def show_updating(port, baud, path):
     filename = os.path.basename(path)
     filesize = os.path.getsize(path)
     estimated_time = {"115200": "60", "460800": "20", "921600": "15"}
     msg = [
         "Updating firmware",
-        "  Device: " + device,
+        "  Port: " + port,
         "  Baud: " + baud,
         "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
         "",
@@ -147,10 +147,10 @@ def show_attempting_to_update(device, baud, path):
     show(msg)
 
 
-def show_attempting_to_erase_flash(device, baud):
+def show_erasing_flash(port, baud):
     msg = [
         "Erasing flash",
-        "  Device: " + device,
+        "  Port: " + port,
         "  Baud: " + baud,
         "",
         "Please wait 16 seconds...",
@@ -209,11 +209,11 @@ def show_banner(version):
     show(msg)
 
 
-def erase_flash(device, baud):
-    show_attempting_to_erase_flash(device, baud)
+def erase_flash(port, baud):
+    show_erasing_flash(port, baud)
     result = True
     try:
-        result, info = erase_morserino(device, baud)
+        result, info = erase_morserino(port, baud)
         if not result:
             show_erase_failure(info)
             result = False
@@ -223,11 +223,11 @@ def erase_flash(device, baud):
     return result
 
 
-def update_firmware(device, baud, path):
-    show_attempting_to_update(device, baud, path)
+def update_firmware(port, baud, path):
+    show_updating(port, baud, path)
     result = True
     try:
-        result, info = update_morserino(device, baud, path)
+        result, info = update_morserino(port, baud, path)
         if not result:
             show_flash_failure(info)
             result = False
@@ -259,7 +259,7 @@ def create_args_parser(app_version):
 
     required = parser.add_argument_group("Required arguments")
     required.add_argument(
-        "-p", "--port", type=str, help="Specify the USB serial port device name."
+        "-p", "--port", type=str, help="Specify the USB serial port name."
     )
     required.add_argument(
         "-f",
@@ -293,7 +293,7 @@ def parse_args(parser):
     return (result, args)
 
 
-def main(device, baud, path, eraseFlash):
+def main(port, baud, path, eraseFlash):
 
     carryOn = True
 
@@ -306,10 +306,10 @@ def main(device, baud, path, eraseFlash):
         carryOn = False
 
     if carryOn and eraseFlash:
-        carryOn = erase_flash(device, baud)
+        carryOn = erase_flash(port, baud)
 
     if carryOn:
-        carryOn = update_firmware(device, baud, path)
+        carryOn = update_firmware(port, baud, path)
 
     if carryOn:
         if eraseFlash:
