@@ -281,7 +281,7 @@ def create_args_parser(app_version):
         "--erase",
         action="store_true",
         default=False,
-        help="Include to erase the memory before updating.",
+        help="Include to erase all content and settings to factory defaults.",
     )
     return parser
 
