@@ -135,14 +135,14 @@ def show_unexpected_error(ex):
 def show_attempting_to_update(device, baud, path):
     filename = os.path.basename(path)
     filesize = os.path.getsize(path)
-
+    estimated_time = {"115200": "60", "460800": "20", "921600": "15"}
     msg = [
         "Updating firmware",
         "  Device: " + device,
         "  Baud: " + baud,
         "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
         "",
-        "Please wait...",
+        "Please wait " + estimated_time[baud] + " seconds...",
     ]
     show(msg)
 
@@ -153,7 +153,7 @@ def show_attempting_to_erase_flash(device, baud):
         "  Device: " + device,
         "  Baud: " + baud,
         "",
-        "Please wait...",
+        "Please wait 16 seconds...",
     ]
     show(msg)
 
@@ -181,7 +181,7 @@ def show_file_system_setup_warning():
     msg = [
         "Setting up SPIFFS file system.",
         "",
-        "Please wait...",
+        "Please wait 40 seconds...",
     ]
     show(msg)
 
