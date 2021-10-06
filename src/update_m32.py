@@ -1,4 +1,4 @@
-__version__ = "0.0.8-preview.1"
+__version__ = "0.0.8-preview.2"
 
 import argparse
 import io
