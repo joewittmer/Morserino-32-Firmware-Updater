@@ -125,7 +125,7 @@ def show_path_error(path):
 
 def show_unexpected_error(ex):
     msg = [
-        "Error: An unexpected error occured " + ex,
+        "Error: An unexpected error occured " + str(ex),
         "",
         "Please ask for assistance.",
     ]
