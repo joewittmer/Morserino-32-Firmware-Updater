@@ -1,13 +1,134 @@
-__version__ = "0.0.8-preview.2"
+__version__ = "0.0.8-preview.3"
 
 import argparse
 import io
 import os
 import sys
+import threading
 import time
-from contextlib import redirect_stdout
 
 import esptool
+
+
+class SocInfo(object):
+    soc = ""
+    features = ""
+    mac = ""
+    crystal = ""
+
+    def __init__(self):
+        self.stdout = sys.stdout
+        self.show_me = True
+
+    def parse(self, s):
+
+        if "Chip is " in s:
+            self.soc = s.split("Chip is ")[1]
+
+        elif "Features: " in s:
+            self.features = s.split("Features: ")[1].split("MHz")[0] + "MHz"
+
+        elif "Crystal is " in s:
+            self.crystal = s.split("Crystal is ")[1]
+
+        elif "MAC: " in s:
+            self.mac = s.split("MAC: ")[1].upper()
+            self.show()
+
+    def show(self):
+        if self.show_me:
+            self.show_me = False
+            msg = [
+                "Connected",
+                "  SOC: " + self.soc,
+                "  Features: " + self.features,
+                "  Crystal: " + self.crystal,
+                "  MAC: " + self.mac,
+                "",
+            ]
+            for m in msg:
+                self.stdout.write(m)
+                self.stdout.write(os.linesep)
+                self.stdout.flush()
+
+
+def percentage(part, whole):
+    percentage = 100 * float(part) / float(whole)
+    return str(int(percentage)) + " %"
+
+
+def show_progress(t, file=sys.stdout, hault=lambda: False):
+    start = time.time()
+    end = time.time()
+
+    while end - start < t:
+        if hault():
+            break
+        p = percentage(end - start, t)
+        m = "\r  Complete: %s" % (p)
+        file.write(m)
+        time.sleep(0.5)
+        end = time.time()
+
+    m = "\r  Complete: 100 %"
+    file.write(m)
+    file.write(os.linesep)
+    file.write(os.linesep)
+
+
+class StdoutFilter(object):
+    def __init__(self, socInfo: SocInfo):
+        self.stdout = sys.stdout
+        self.io_str = io.StringIO()
+        self.socInfo = socInfo
+        self.read_flash_size = False
+        self.flash_erase_complete = False
+        self.read_percentage_complete = False
+
+    def write(self, message):
+        s = str(message)
+
+        self.socInfo.parse(s)
+
+        t = threading.Thread(
+            target=show_progress,
+            args=(20, self.stdout, lambda: self.flash_erase_complete),
+        )
+
+        if "Erasing flash" in s:
+            self.show("Erasing flash")
+            t.start()
+
+        elif "Chip erase completed successfully" in s:
+            self.flash_erase_complete = True
+            time.sleep(1)
+
+        if "Writing at 0x00010000" in s:
+            self.show("Writing to flash")
+            self.read_percentage_complete = True
+
+        if self.read_percentage_complete:
+            if "%" in s:
+                p = s.split("(")[1].split(")")[0]
+                self.stdout.write("\r  Complete: " + p)
+
+                if p == "100 %":
+                    self.read_percentage_complete = False
+                    self.show()
+                    self.show()
+
+        self.io_str.write(message)
+
+    def flush(self):
+        pass
+
+    def show(self, msg=""):
+        self.stdout.write(msg)
+        self.stdout.write(os.linesep)
+
+
+socInfo = SocInfo()
+stdoutFilter = StdoutFilter(socInfo)
 
 
 # https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile/13790741#13790741
@@ -52,11 +173,17 @@ def get_update_command(port, rate, path):
 
 
 def update_morserino(port, rate, path):
-    f = io.StringIO()
-    with redirect_stdout(f):
-        command = get_update_command(port, rate, path)
+    sys.stdout = stdoutFilter
+    command = get_update_command(port, rate, path)
+
+    try:
         esptool.main(command)
-    s = f.getvalue().rstrip()
+    except Exception as ex:
+        raise ex
+    finally:
+        sys.stdout = stdoutFilter.stdout
+
+    s = stdoutFilter.io_str.getvalue().rstrip()
     writeConfirmation = "Hash of data verified."
     return s.count(writeConfirmation) == 4, s
 
@@ -78,19 +205,25 @@ def get_erase_command(port, rate):
 
 
 def erase_morserino(port, rate):
-    f = io.StringIO()
-    with redirect_stdout(f):
-        command = get_erase_command(port, rate)
+    sys.stdout = stdoutFilter
+    command = get_erase_command(port, rate)
+
+    try:
         esptool.main(command)
-    s = f.getvalue().rstrip()
+    except Exception as ex:
+        raise ex
+    finally:
+        sys.stdout = stdoutFilter.stdout
+
+    s = stdoutFilter.io_str.getvalue().rstrip()
     writeConfirmation = "Chip erase completed successfully"
     return s.count(writeConfirmation) == 1, s
 
 
 def show(text):
+    text.append("")
     for s in text:
         print(s)
-    print("")
 
 
 def show_missing_required_args_error(app):
@@ -135,25 +268,11 @@ def show_unexpected_error(ex):
 def show_updating(port, baud, path):
     filename = os.path.basename(path)
     filesize = os.path.getsize(path)
-    estimated_time = {"115200": "60", "460800": "20", "921600": "15"}
     msg = [
-        "Updating firmware",
+        "Starting update",
         "  Port: " + port,
         "  Baud: " + baud,
         "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
-        "",
-        "Please wait " + estimated_time[baud] + " seconds...",
-    ]
-    show(msg)
-
-
-def show_erasing_flash(port, baud):
-    msg = [
-        "Erasing flash",
-        "  Port: " + port,
-        "  Baud: " + baud,
-        "",
-        "Please wait 16 seconds...",
     ]
     show(msg)
 
@@ -177,13 +296,10 @@ def show_success():
     show(msg)
 
 
-def show_file_system_setup_warning():
-    msg = [
-        "Setting up SPIFFS file system.",
-        "",
-        "Please wait 40 seconds...",
-    ]
-    show(msg)
+def show_setting_up_file_system():
+
+    print("Setting up SPIFFS file system")
+    show_progress(40)
 
 
 def show_flash_failure(info):
@@ -210,7 +326,6 @@ def show_banner(version):
 
 
 def erase_flash(port, baud):
-    show_erasing_flash(port, baud)
     result = True
     try:
         result, info = erase_morserino(port, baud)
@@ -224,7 +339,6 @@ def erase_flash(port, baud):
 
 
 def update_firmware(port, baud, path):
-    show_updating(port, baud, path)
     result = True
     try:
         result, info = update_morserino(port, baud, path)
@@ -305,6 +419,9 @@ def main(port, baud, path, eraseFlash):
         show_path_error(path)
         carryOn = False
 
+    if carryOn:
+        show_updating(port, baud, path)
+
     if carryOn and eraseFlash:
         carryOn = erase_flash(port, baud)
 
@@ -313,8 +430,7 @@ def main(port, baud, path, eraseFlash):
 
     if carryOn:
         if eraseFlash:
-            show_file_system_setup_warning()
-            time.sleep(40)
+            show_setting_up_file_system()
         show_success()
 
 
