@@ -6,8 +6,31 @@ on:
       - 'v*'
 
 jobs:
+  createrelease:
+    name: Create Release
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: false
+      - name: Output Release URL File
+        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
+      - name: Save Release URL File for publish
+        uses: actions/upload-artifact@v1
+        with:
+          name: release_url
+          path: release_url.txt
+
   build:
     name: Build packages
+    needs: createrelease
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -39,7 +62,8 @@ jobs:
             exe_name: update_m32.exe
             mime: application/zip
     steps:
-      - uses: actions/checkout@v1
+      - name: Checkout code
+        uses: actions/checkout@v1
 
       - name: Set up Python 3.7
         uses: actions/setup-python@v2
@@ -106,3 +130,26 @@ jobs:
         with:
           name: artifacts
           path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
+      
+      - name: Load Release URL File from release job
+        uses: actions/download-artifact@v1
+        with:
+          name: release_url
+
+      - name: Get release file name and upload url
+        id: get_release_info
+        shell: bash
+        run: |
+          value=`cat release_url/release_url.txt`
+          echo ::set-output name=upload_url::$value
+
+      - name: Upload release artifacts
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
+          asset_name: ${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
+          asset_content_type: ${{ matrix.mime}}     
