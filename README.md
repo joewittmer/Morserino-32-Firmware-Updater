@@ -9,7 +9,7 @@ The [Morserino-32](https://github.com//oe1wkl/Morserino-32) is a multi-functiona
 
 Please follow the step-by-step instructions provided in Appendix 4 of the [Morserino-32 Manual](https://github.com/oe1wkl/Morserino-32/tree/master/Documentation/User%20Manual).
 
-The release files for this firmware update utility program are available to download [here](https://github.com/joewittmer/Morserino-32-Firmware-Updater/tree/master/release).
+The release files for this firmware update utility program are available to download [here](https://github.com/joewittmer/Morserino-32-Firmware-Updater/releases).
 
 
 ## Instructions for full factory erase
