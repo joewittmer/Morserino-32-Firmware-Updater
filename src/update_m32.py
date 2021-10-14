@@ -3,10 +3,8 @@ __version__ = "0.0.8-preview.4"
 import argparse
 import os
 import sys
-import threading
 
 from morserino import Morserino
-from show_timed_progress import show_timed_progress
 from soc_info import SocInfo
 
 
@@ -81,12 +79,6 @@ def show_completion(percentage):
         sys.stdout.write(os.linesep)
 
 
-def show_timed_completion(t):
-    t = threading.Thread(target=show_timed_progress, args=(20, show_completion))
-    t.start()
-    t.join()
-
-
 def create_args_parser(app_version):
     parser = argparse.ArgumentParser(add_help=False)
 
@@ -155,7 +147,11 @@ def main(app, port, baud, path, eraseFlash):
     connecting = "Connecting"
     erasing_flash = "Erasing flash"
     updating_firmware = "Updating firmware"
-    setting_up_file_system = "Setting up SPIFFS file system"
+    setting_up_file_system = [
+        "The Morserino-32 is now setting up the SPIFF file system.",
+        "",
+        "Please wait to disconnect the USB cable until the Morserino-32 reboots (about 60 seconds).",
+    ]
     firmware_update_success = "Firmware was updated successfully."
 
     try:
@@ -182,12 +178,11 @@ def main(app, port, baud, path, eraseFlash):
         print(updating_firmware)
         morserino.update(show_completion)
 
-        if eraseFlash:
-            print(setting_up_file_system)
-            show_timed_completion(50)
-
         print(firmware_update_success)
         print()
+
+        if eraseFlash:
+            show(setting_up_file_system)
 
     except Exception as ex:
         show_error(app, ex)
