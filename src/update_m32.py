@@ -124,19 +124,6 @@ def create_args_parser(app_version):
         default=False,
         help="Include to erase all content and settings to factory defaults.",
     )
-    optional.add_argument(
-        "-md5",
-        "--md5",
-        type=str,
-        help="Include to verify firmware with the provided md5 checksum instead of known release file checksums.",
-    )
-    optional.add_argument(
-        "-no-md5",
-        "--no-md5",
-        action="store_true",
-        default=False,
-        help="Include to skip md5 checksum verification of firmware file before updating.",
-    )
     return parser
 
 
@@ -144,6 +131,7 @@ def main(app, port, baud, path, eraseFlash):
 
     starting_update = "Starting update"
     verifying_firmware = "Verifying firmware"
+    verifying_baud = "Verifying baud"
     connecting = "Connecting"
     erasing_flash = "Erasing flash"
     updating_firmware = "Updating firmware"
@@ -159,14 +147,11 @@ def main(app, port, baud, path, eraseFlash):
 
         show_updating(starting_update, path, port, baud)
 
-        if args.md5 is not None:
-            morserino.update_md5_checksum_table_with_single_checksum(args.md5)
+        print(verifying_baud)
+        morserino.validate_baud(baud, show_verification_passed)
 
-        if args.no_md5 is False:
-            print(verifying_firmware)
-            morserino.check_firmware_against_known_md5_checksums(
-                path, show_md5, show_verification_passed
-            )
+        print(verifying_firmware)
+        morserino.validate_firmware(path, show_verification_passed)
 
         print(connecting)
         morserino.get_info(show_connected)

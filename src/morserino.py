@@ -5,8 +5,8 @@ import esptool
 
 from custom_exception import CustomException
 from erase_firmware_message_parser import EraseFirmwareMessageParser
-from generate_md5checksum import generate_md5checksum
 from get_resource_path import get_resource_path
+from image_info_validation_parser import ImageInfoValidationParser
 from soc_info import SocInfo
 from soc_info_message_parser import SocInfoMessageParser
 from stdout_parser import StdoutParser
@@ -15,12 +15,10 @@ from update_firmware_message_parser import UpdateFirmwareMessageParser
 
 class Morserino(object):
     def __init__(self, port, baud, path):
-        self.__validate_baud(baud)
-        self.__validate_path(path)
-        self.md5_checksum_table = self.__get_md5_checksum_table()
         self.update_command = self.__get_update_command(port, baud, path)
         self.erase_command = self.__get_erase_command(port, baud)
         self.info_command = self.__get_info_command(port, baud)
+        self.image_info_command = self.__get_image_info_command(port, baud, path)
 
     def __get_update_command(self, port, baud, path):
         otadata = get_resource_path("bin/boot_app0.bin")
@@ -81,55 +79,48 @@ class Morserino(object):
             "flash_id",
         ]
 
-    def __get_md5_checksum_table(self):
-        return [
-            "6eff362633be2b6a54071259ac0448ad",
-            "23459824764033918dbba536e4f35ea5",
-            "40e1b020227f8b1702586d3aa9c80ef6",
-            "1a600a8da0cfbd29fe5f05fb9b6bcdd1",
-            "0131a5a4b3025a10ad5854f38c7305ed",
-            "fab777612ae7ecfa71e24f55b4292e58",
-            "bd8cab3a4e08b5359294cc809f154a54",
-            "0b95ee9ee4f3f6ab06f2c821b6cd65aa",
-            "382284ca46b24c4a21999b9a8ac3ac07",
-            "fcdab68b51c3296d75a6584cce026fe1",
-            "5f7b4f57eb92675d6b10bc399f4ea360",
-            "10550ca5451c31f3e43a952e63d40fac",
-            "714a46bfc069f086e61db4883a6feb4a",
-            "7984199a0022c877513221464ffb5100",
-        ]
+    def __get_image_info_command(self, port, baud, path):
+        return ["--chip", "esp32", "--port", port, "--baud", baud, "image_info", path]
 
-    def __validate_baud(self, baud):
+    def validate_baud(self, baud, callback):
         bauds = ["115200", "460800", "921600"]
         if baud not in bauds:
             raise CustomException(
                 "Invalid baud rate.%s%sPlease use a baud rate: 115200, 460800, or 921600."
                 % (os.linesep, os.linesep)
             )
+        callback()
 
-    def __validate_path(self, path):
+    def validate_firmware(self, path, callback):
+
         if not os.path.exists(path):
             raise CustomException(
-                "Unable to open file at %s%s%sPlease check firmware file location."
+                "Unable to open the file at %s%s%sPlease check the firmware file location and try again."
                 % (path, os.linesep, os.linesep)
             )
 
-    def __validate_md5_checksum(self, path, show_md5, show_verification_passed):
-        md5 = generate_md5checksum(path)
-        md5 = str(md5)
-        show_md5(md5)
-        if md5 not in self.md5_checksum_table:
-            raise CustomException(
-                "Verification of firmware failed.%s%sPlease check for file corruption."
-                % (os.linesep, os.linesep)
-            )
-        else:
-            show_verification_passed()
+        imageInfoValidationParser = ImageInfoValidationParser()
+        save_stdout = sys.stdout
+        sys.stdout = StdoutParser(imageInfoValidationParser.parse)
 
-        return md5
+        try:
+            esptool.main(self.image_info_command)
+
+        except Exception as ex:
+            raise ex
+        finally:
+            sys.stdout = save_stdout
+
+        if imageInfoValidationParser.result:
+            callback()
+        else:
+            raise CustomException(
+                "Unable to verify the firmware file at %s%s%sPlease download the firmware file again and retry."
+                % (path, os.linesep, os.linesep)
+            )
 
     def update_md5_checksum_table_with_single_checksum(self, checksum):
-        self.md5_checksum_table = [checksum]
+        self.md5_checksum_table.append(str(checksum))
 
     def check_firmware_against_known_md5_checksums(
         self, path, show_md5, show_verification_passed
@@ -137,6 +128,12 @@ class Morserino(object):
         return self.__validate_md5_checksum(path, show_md5, show_verification_passed)
 
     def get_info(self, callback=lambda: SocInfo()):
+        def bad_port_exception():
+            raise CustomException(
+                "Error connecting to morserino.%s%sPlease check the port is correct."
+                % (os.linesep, os.linesep)
+            )
+
         socInfo = SocInfo()
         socInfoMessageParser = SocInfoMessageParser(socInfo)
         save_stdout = sys.stdout
@@ -145,18 +142,15 @@ class Morserino(object):
         try:
             esptool.main(self.info_command)
 
-        except Exception as ex:
-            raise ex
+        except Exception:
+            raise bad_port_exception()
         finally:
             sys.stdout = save_stdout
 
         if socInfoMessageParser.result:
             callback(socInfo)
         else:
-            raise CustomException(
-                "Error connecting to morserino.%s%s Please check the port is correct."
-                % (os.linesep, os.linesep)
-            )
+            raise bad_port_exception()
 
     def erase(self, callback):
         stdout = sys.stdout
