@@ -1,212 +1,33 @@
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 
-import io
+import argparse
 import os
 import sys
-import time
-from contextlib import redirect_stdout
 
-import esptool
-
-
-# https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile/13790741#13790741
-def get_resource_path(relative_path):
-    dir = os.path.dirname(os.path.abspath(__file__))
-    base = getattr(sys, "_MEIPASS", dir)
-    return os.path.join(base, relative_path)
-
-
-def get_update_command(port, rate, path):
-    otadata = get_resource_path("bin/boot_app0.bin")
-    bootloader = get_resource_path("bin/bootloader_qio_80m.bin")
-    app = path
-    partitionTable = get_resource_path("bin/morse_3_v3.0.ino.partitions.bin")
-
-    return [
-        "--chip",
-        "esp32",
-        "--port",
-        port,
-        "--baud",
-        rate,
-        "--before",
-        "default_reset",
-        "--after",
-        "hard_reset",
-        "write_flash",
-        "-z",
-        "--flash_mode",
-        "dio",
-        "--flash_freq",
-        "80m",
-        "0xe000",
-        otadata,
-        "0x1000",
-        bootloader,
-        "0x10000",
-        app,
-        "0x8000",
-        partitionTable,
-    ]
-
-
-def update_morserino(port, rate, path):
-    f = io.StringIO()
-    with redirect_stdout(f):
-        command = get_update_command(port, rate, path)
-        esptool.main(command)
-    s = f.getvalue().rstrip()
-    writeConfirmation = "Hash of data verified."
-    return s.count(writeConfirmation) == 4, s
-
-
-def get_erase_command(port, rate):
-    return [
-        "--chip",
-        "esp32",
-        "--port",
-        port,
-        "--baud",
-        rate,
-        "--before",
-        "default_reset",
-        "--after",
-        "hard_reset",
-        "erase_flash",
-    ]
-
-
-def erase_morserino(port, rate):
-    f = io.StringIO()
-    with redirect_stdout(f):
-        command = get_erase_command(port, rate)
-        esptool.main(command)
-    s = f.getvalue().rstrip()
-    writeConfirmation = "Chip erase completed successfully"
-    return s.count(writeConfirmation) == 1, s
+from morserino import Morserino
+from soc_info import SocInfo
 
 
 def show(text):
+    text.append("")
     for s in text:
         print(s)
-    print("")
 
 
-def show_general_error(app):
-    filename = os.path.basename(app)
-    msg = [
-        "Error:",
-        "",
-        "Please try again with the following command line options: ",
-        " " + filename + " {serial_port} {rate} {file_path} erase",
-        "",
-        "Where: {rate} is 115200, 460800, or 921600",
-        "        erase is optional; clears entire flash memory",
-    ]
-    show(msg)
+def show_error(app, error):
 
-
-def show_rate_error(rate):
-    msg = [
-        "Error:",
-        "Unable to use rate " + rate,
-        "",
-        "Please use 115200, 460800, or 921600",
-    ]
-    show(msg)
-
-
-def show_path_error(path):
-    msg = [
-        "Error:",
-        "Unable to open file at: " + path,
-        "",
-        "Please check filename and path",
-    ]
-    show(msg)
-
-
-def show_unexpected_error(ex):
-    msg = [
-        "Error: ",
-        ex,
-        "",
-        "An unexpected error occured. Please ask for assistance.",
-    ]
-    show(msg)
-
-
-def show_attempting_to_update(port, rate, path):
-    filename = os.path.basename(path)
-    filesize = os.path.getsize(path)
+    s = str(error)
 
     msg = [
-        "Attempting to update firmware",
-        "  Port: " + port,
-        "  Rate: " + rate,
-        "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
-        "Please wait...",
-    ]
-    show(msg)
-
-
-def show_attempting_to_erase_flash(port, rate):
-    msg = [
-        "Attempting to erase flash",
-        "  Port: " + port,
-        "  Rate: " + rate,
+        "  Error: " + str(s),
         "",
-        "Please wait...",
-    ]
-    show(msg)
-
-
-def show_erase_success():
-    msg = ["Chip was erased successfully"]
-    show(msg)
-
-
-def show_erase_failure(info):
-    msg = [
-        "Error:",
-        info,
+        "For help, please run:",
         "",
-        "Chip erase failed. Please ask for assistance.",
-    ]
-    show(msg)
-
-
-def show_success():
-    msg = ["Firmware was updated successfully"]
-    show(msg)
-
-
-def show_file_system_setup_warning():
-    msg = [
-        "Setting up SPIFFS file system",
+        app + " --help",
         "",
-        "Please wait...",
     ]
+
     show(msg)
-
-
-def show_flash_failure(info):
-    msg = [
-        "Error: ",
-        info,
-        "",
-        "Firmware update failed. Please ask for assistance.",
-    ]
-    show(msg)
-
-
-def get_rate_exists(rate):
-    rates = ["115200", "460800", "921600"]
-    return rate in rates
-
-
-def get_path_exists(path):
-    return os.path.exists(path)
 
 
 def show_banner(version):
@@ -214,75 +35,151 @@ def show_banner(version):
     show(msg)
 
 
-def erase_flash(port, rate):
-    show_attempting_to_erase_flash(port, rate)
-    result = True
+def show_updating(starting_update, path, port, baud):
+    filename = os.path.basename(path)
+    filesize = os.path.getsize(path)
+    msg = [
+        starting_update,
+        "  Port: " + port,
+        "  Baud: " + baud,
+        "  Firmware: " + filename + " (" + str(filesize) + " bytes)",
+    ]
+    show(msg)
+
+
+def show_md5(md5):
+    print("  MD5 Checksum: " + md5)
+
+
+def show_verification_passed():
+    msg = [
+        "  Verification: Passed",
+    ]
+    show(msg)
+
+
+def show_connected(socInfo: SocInfo):
+    msg = [
+        "  SOC: " + socInfo.soc,
+        "  Features: " + socInfo.features,
+        "  Crystal: " + socInfo.crystal,
+        "  MAC: " + socInfo.mac,
+        "  Flash size: " + socInfo.flash_size,
+    ]
+    show(msg)
+
+
+def show_completion(percentage):
+    msg = "\r  Complete: %3s %%" % (str(percentage))
+
+    sys.stdout.write(msg)
+
+    if percentage == 100:
+        sys.stdout.write(os.linesep)
+        sys.stdout.write(os.linesep)
+
+
+def create_args_parser(app_version):
+    parser = argparse.ArgumentParser(add_help=False)
+
+    help = parser.add_argument_group("Help arguments")
+    help.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        default=argparse.SUPPRESS,
+        help="Show this help message and exit.",
+    )
+    help.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=app_version,
+        help="Show this program's version number and exit.",
+    )
+
+    required = parser.add_argument_group("Required arguments")
+    required.add_argument(
+        "-p", "--port", type=str, help="Specify the USB serial port name."
+    )
+    required.add_argument(
+        "-f",
+        "--file",
+        type=str,
+        help="Specify the path to the firmware .bin file to upload.",
+    )
+
+    optional = parser.add_argument_group("Optional arguments")
+    optional.add_argument(
+        "-b",
+        "--baud",
+        type=str,
+        default="921600",
+        help="Include to set baud rate when updating. Valid options are 115200, 460800, or 921600. Default is 921600.",
+    )
+    optional.add_argument(
+        "-e",
+        "--erase",
+        action="store_true",
+        default=False,
+        help="Include to erase all content and settings to factory defaults.",
+    )
+    return parser
+
+
+def main(app, port, baud, path, eraseFlash):
+
+    starting_update = "Starting update"
+    verifying_firmware = "Verifying firmware"
+    verifying_baud = "Verifying baud"
+    connecting = "Connecting"
+    erasing_flash = "Erasing flash"
+    updating_firmware = "Updating firmware"
+    setting_up_file_system = [
+        "The Morserino-32 is now setting up the SPIFF file system.",
+        "",
+        "Please wait to disconnect the USB cable until the Morserino-32 reboots (about 60 seconds).",
+    ]
+    firmware_update_success = "Firmware was updated successfully."
+
     try:
-        result, info = erase_morserino(port, rate)
-        if not result:
-            show_erase_failure(info)
-            result = False
-    except Exception as ex:
-        show_unexpected_error(ex)
-        result = False
-    return result
+        morserino = Morserino(port, baud, path)
 
+        show_updating(starting_update, path, port, baud)
 
-def update_firmware(port, rate, path):
-    show_attempting_to_update(port, rate, path)
-    result = True
-    try:
-        result, info = update_morserino(port, rate, path)
-        if not result:
-            show_flash_failure(info)
-            result = False
+        print(verifying_baud)
+        morserino.validate_baud(baud, show_verification_passed)
 
-    except Exception as ex:
-        show_unexpected_error(ex)
-        result = False
-    return result
+        print(verifying_firmware)
+        morserino.validate_firmware(path, show_verification_passed)
 
+        print(connecting)
+        morserino.get_info(show_connected)
 
-def main(port, rate, path, eraseFlash):
-    show_banner(__version__)
-
-    carryOn = True
-
-    if not get_rate_exists(rate):
-        show_rate_error(rate)
-        carryOn = False
-
-    if not get_path_exists(path):
-        show_path_error(path)
-        carryOn = False
-
-    if carryOn and eraseFlash:
-        carryOn = erase_flash(port, rate)
-
-    if carryOn:
-        carryOn = update_firmware(port, rate, path)
-
-    if carryOn:
         if eraseFlash:
-            show_file_system_setup_warning()
-            time.sleep(40)
-        show_success()
+            print(erasing_flash)
+            morserino.erase(show_completion)
+
+        print(updating_firmware)
+        morserino.update(show_completion)
+
+        print(firmware_update_success)
+        print()
+
+        if eraseFlash:
+            show(setting_up_file_system)
+
+    except Exception as ex:
+        show_error(app, ex)
 
 
 if __name__ == "__main__":
+    show_banner(__version__)
     app = sys.argv[0]
-    if len(sys.argv) > 3:
-        port = sys.argv[1]
-        rate = sys.argv[2]
-        path = sys.argv[3]
-        if len(sys.argv) > 4:
-            if sys.argv[4].lower() == "erase":
-                eraseFlash = True
-                main(port, rate, path, eraseFlash)
-            else:
-                show_general_error(app)
-        else:
-            eraseFlash = False
-            main(port, rate, path, eraseFlash)
+    parser = create_args_parser(__version__)
+    args = parser.parse_args()
+
+    if args.port is None or args.baud is None:
+        show_error(app, "Missing required command line arguements.")
     else:
-        show_general_error(app)
+        main(app, args.port, args.baud, args.file, args.erase)
