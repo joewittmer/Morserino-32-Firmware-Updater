@@ -1,4 +1,7 @@
 {
+    "terminal.integrated.env.osx": {
+        "PATH": ""
+    },
     "python.linting.pylintEnabled": false,
     "python.linting.enabled": true,
     "python.linting.flake8Enabled": true,
