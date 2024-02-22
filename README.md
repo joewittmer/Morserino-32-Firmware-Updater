@@ -31,42 +31,48 @@ update_m32.exe -p COM5 -f m32_v4.1.ino.wifi_lora_32_V2.bin -e
 
 ## For developers
 
-macOS steps to build update_m32:
+### macOS (Intel) steps to build:
 
 - Clone this repository
-- Download and install [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
-- Create the virtual envionment
+- Install [Homebrew](https://brew.sh)
+- Install Miniforge3
+  ```commandline
+  breaw install miniforge
   ```
-  conda env create
+- Create the virtual environment (macOS Intel)
+  ```commandline
+  conda env create --file environment.yml
   ```
+- Create the virtual envionment (macOS Apple Silicone)
+  ```commandline
+   CONDA_SUBDIR=osx-64 conda env create --file environment.yml
+
 - Activate the virtual environment
-  ```
+  ```commandline
   conda activate update-m32
   ```
 - Create distribution
-  ```
+  ```commandline
   sh distribute.sh
   ```
 
-Windows steps to build update_m32.exe:
+### Windows steps to build:
 
 - Clone this repository
-- Download and install [Miniconda3](https://docs.conda.io/en/latest/miniconda.html)
-- Open the Anaconda Prompt: Start -> Anaconda3 (64-Bit) -> Anaconda Prompt (Miniconda3)
-- Create the virtual envionment
-  ```
+- Download and install [Miniforge3](https://github.com/conda-forge/miniforge)
+- Open the Miniforge Prompt: Start -> Miniforge Prompt
+- Create the virtual environment
+  ```commandline
   conda env create
   ```
 - Activate the virtual environment
-  ```
+  ```commandline
   conda activate update-m32
   ```
 - Create distribution
-  ```
+  ```commandline
   distribute.bat
   ```
-
-
 
 ## Acknowledgements
 
