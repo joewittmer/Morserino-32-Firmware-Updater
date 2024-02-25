@@ -37,7 +37,7 @@ update_m32.exe -p COM5 -f m32_v4.1.ino.wifi_lora_32_V2.bin -e
 - Install [Homebrew](https://brew.sh)
 - Install Miniforge3
   ```commandline
-  breaw install miniforge
+  brew install miniforge
   ```
 - Create the virtual environment (macOS Intel)
   ```commandline
