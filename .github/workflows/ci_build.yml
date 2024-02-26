@@ -21,35 +21,23 @@ jobs:
           - windows-latest
           
     runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
 
-      - name: Fix conda permissions on macOS
-        if: matrix.os == 'macos-latest'
-        run: sudo chown -R $UID $CONDA
-
-      - name: Add conda to *nix system path
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+      - name: Create environment
         shell: bash -l {0}
         run: |
-          echo $CONDA/bin >> $GITHUB_PATH
+          conda env update --file environment.yml
 
-      - name: Add conda to windows system path
-        if: matrix.os == 'windows-latest'
+      - name: Activate environment
         shell: bash -l {0}
         run: |
-          echo $CONDA/Scripts >> $GITHUB_PATH
-
-      - name: Update base environment
-        shell: bash -l {0}
-        run: |
-          conda env update --file environment.yml --name base
+          conda activate update-m32
 
       - name: Lint with flake8
         shell: bash -l {0}
