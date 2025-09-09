@@ -14,7 +14,21 @@ from update_firmware_message_parser import UpdateFirmwareMessageParser
 
 
 class Morserino(object):
-    def __init__(self, port, baud, path):
+    def __init__(self, port, baud, path, model="M32"):
+        """Create a Morserino helper.
+
+        model: "M32" or "M32Pocket" (case-insensitive). "M32" uses the esp32
+        chip string for esptool. "M32Pocket" uses esp32s3.
+        """
+        # Normalize model and choose the esptool chip name
+        model_key = (model or "M32").lower()
+        if "pocket" in model_key or "s3" in model_key:
+            self.model = "M32Pocket"
+            self.chip = "esp32s3"
+        else:
+            self.model = "M32"
+            self.chip = "esp32"
+
         self.update_command = self.__get_update_command(port, baud, path)
         self.erase_command = self.__get_erase_command(port, baud)
         self.info_command = self.__get_info_command(port, baud)
@@ -28,7 +42,7 @@ class Morserino(object):
 
         return [
             "--chip",
-            "esp32",
+            self.chip,
             "--port",
             port,
             "--baud",
@@ -56,7 +70,7 @@ class Morserino(object):
     def __get_erase_command(self, port, baud):
         return [
             "--chip",
-            "esp32",
+            self.chip,
             "--port",
             port,
             "--baud",
@@ -71,7 +85,7 @@ class Morserino(object):
     def __get_info_command(self, port, baud):
         return [
             "--chip",
-            "esp32",
+            self.chip,
             "--port",
             port,
             "--baud",
@@ -80,7 +94,16 @@ class Morserino(object):
         ]
 
     def __get_image_info_command(self, port, baud, path):
-        return ["--chip", "esp32", "--port", port, "--baud", baud, "image_info", path]
+        return [
+            "--chip",
+            self.chip,
+            "--port",
+            port,
+            "--baud",
+            baud,
+            "image_info",
+            path,
+        ]
 
     def validate_baud(self, baud, callback):
         bauds = ["115200", "460800", "921600"]

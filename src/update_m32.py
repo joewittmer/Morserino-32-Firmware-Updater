@@ -118,6 +118,14 @@ def create_args_parser(app_version):
         help="Include to set baud rate when updating. Valid options are 115200, 460800, or 921600. Default is 921600.",
     )
     optional.add_argument(
+        "-d",
+        "--device",
+        type=str,
+        choices=["M32", "M32Pocket"],
+        default="M32",
+        help="Select target device type: M32 (esp32) or M32Pocket (esp32s3). Default is M32.",
+    )
+    optional.add_argument(
         "-e",
         "--erase",
         action="store_true",
@@ -127,7 +135,7 @@ def create_args_parser(app_version):
     return parser
 
 
-def main(app, port, baud, path, eraseFlash):
+def main(app, port, baud, path, eraseFlash, device):
 
     starting_update = "Starting update"
     verifying_firmware = "Verifying firmware"
@@ -143,7 +151,7 @@ def main(app, port, baud, path, eraseFlash):
     firmware_update_success = "Firmware was updated successfully."
 
     try:
-        morserino = Morserino(port, baud, path)
+        morserino = Morserino(port, baud, path, model=device)
 
         show_updating(starting_update, path, port, baud)
 
@@ -179,7 +187,7 @@ if __name__ == "__main__":
     parser = create_args_parser(__version__)
     args = parser.parse_args()
 
-    if args.port is None or args.baud is None:
+    if args.port is None or args.file is None:
         show_error(app, "Missing required command line arguements.")
     else:
-        main(app, args.port, args.baud, args.file, args.erase)
+        main(app, args.port, args.baud, args.file, args.erase, args.device)

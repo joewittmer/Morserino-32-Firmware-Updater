@@ -11,6 +11,27 @@ Please follow the step-by-step instructions provided in Appendix 4 of the [Morse
 
 The release files for this firmware update utility program are available to download [here](https://github.com/joewittmer/Morserino-32-Firmware-Updater/releases).
 
+## Command-line options (summary)
+
+This updater exposes a small set of command-line options. Of particular note is the new device selector:
+
+- -d, --device: Select the target device type. Valid values are `M32` or `M32Pocket`. Default is `M32`.
+
+- M32 -> uses the ESP32 chip string for esptool (`--chip esp32`).
+- M32Pocket -> uses the ESP32-S3 chip string for esptool (`--chip esp32s3`).
+
+Example (macOS, default device M32):
+
+```
+./update_m32 -p /dev/tty.usbserial-0001 -f m32_v4.1.ino.wifi_lora_32_V2.bin
+```
+
+Example (macOS, target M32Pocket / ESP32-S3):
+
+```
+./update_m32 -p /dev/tty.usbserial-0001 -f m32_v4.1.ino.wifi_lora_32_V2.bin -d M32Pocket
+```
+
 
 ## Instructions for full factory erase
 
