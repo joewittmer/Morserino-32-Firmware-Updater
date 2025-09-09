@@ -15,12 +15,7 @@ from update_firmware_message_parser import UpdateFirmwareMessageParser
 
 class Morserino(object):
     def __init__(self, port, baud, path, model="M32"):
-        """Create a Morserino helper.
 
-        model: "M32" or "M32Pocket" (case-insensitive). "M32" uses the esp32
-        chip string for esptool. "M32Pocket" uses esp32s3.
-        """
-        # Normalize model and choose the esptool chip name
         model_key = (model or "M32").lower()
         if "pocket" in model_key or "s3" in model_key:
             self.model = "M32Pocket"
@@ -35,10 +30,39 @@ class Morserino(object):
         self.image_info_command = self.__get_image_info_command(port, baud, path)
 
     def __get_update_command(self, port, baud, path):
-        otadata = get_resource_path("bin/boot_app0.bin")
-        bootloader = get_resource_path("bin/bootloader_qio_80m.bin")
+        if self.model == "M32":
+            # When bundled with PyInstaller we place files in sys._MEIPASS/m32/
+            # so use the folder name relative to the bundle root.
+            res_folder = "m32"
+            otadata = get_resource_path(res_folder + "/boot_app0.bin")
+            bootloader = get_resource_path(res_folder + "/bootloader_qio_80m.bin")
+            partitionTable = get_resource_path(res_folder + "/morse_3_v3.0.ino.partitions.bin")
+        else:
+            res_folder = "m32pocket"
+            otadata = get_resource_path(res_folder + "/boot_app0.bin")
+            bootloader = get_resource_path(res_folder + "/bootloader.bin")
+            partitionTable = get_resource_path(res_folder + "/partitions.bin")
+
         app = path
-        partitionTable = get_resource_path("bin/morse_3_v3.0.ino.partitions.bin")
+        # Offsets differ between M32 (esp32) and M32Pocket (esp32s3 / M32-p)
+        # Keep existing offsets for M32. For M32Pocket use the offsets provided.
+        if self.model == "M32":
+            otadata_offset = "0xe000"
+            bootloader_offset = "0x1000"
+            app_offset = "0x10000"
+            partition_offset = "0x8000"
+            # Flash parameters for ESP32
+            flash_mode = "dio"
+            flash_freq = "80m"
+        else:
+            # M32Pocket (ESP32-S3)
+            otadata_offset = "0xe000"
+            bootloader_offset = "0x0"
+            app_offset = "0x10000"
+            partition_offset = "0x8000"
+            # Defaults for S3; verify your board's flash type and freq and change if necessary
+            flash_mode = "qio"
+            flash_freq = "80m"
 
         return [
             "--chip",
@@ -54,16 +78,16 @@ class Morserino(object):
             "write_flash",
             "-z",
             "--flash_mode",
-            "dio",
+            flash_mode,
             "--flash_freq",
-            "80m",
-            "0xe000",
+            flash_freq,
+            otadata_offset,
             otadata,
-            "0x1000",
+            bootloader_offset,
             bootloader,
-            "0x10000",
+            app_offset,
             app,
-            "0x8000",
+            partition_offset,
             partitionTable,
         ]
 
