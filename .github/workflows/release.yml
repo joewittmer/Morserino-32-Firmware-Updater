@@ -35,12 +35,23 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-14
             app: update_m32
-            target: macos
+            target: macos-arm64
             type: cli
             conda_path: $CONDA/bin
-            assets: src/bin/*.bin:bin/
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32pocket/
+            exe_name: update_m32
+            mime: application/zip
+
+          - os: macos-13
+            app: update_m32
+            target: macos-x86_64
+            type: cli
+            conda_path: $CONDA/bin
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32pocket/
             exe_name: update_m32
             mime: application/zip
 
@@ -49,7 +60,8 @@ jobs:
             target: ubuntu
             type: cli
             conda_path: $CONDA/bin
-            assets: src/bin/*.bin:bin/
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32pocket/
             exe_name: update_m32
             mime: application/zip
 
@@ -58,7 +70,8 @@ jobs:
             target: windows
             type: cli
             conda_path: $CONDA/Scripts
-            assets: src/bin/*.bin;bin/
+            add_data1: src/m32/*.bin;m32/
+            add_data2: src/m32pocket/*.bin;m32pocket/
             exe_name: update_m32.exe
             mime: application/zip
     steps:
@@ -67,21 +80,17 @@ jobs:
 
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v3
-
-      - name: Create environment
-        shell: bash -l {0}
-        run: |
-          conda env update --file environment.yml
-
-      - name: Activate environment
-        shell: bash -l {0}
-        run: |
-          conda activate update-m32
+        with:
+          miniforge-variant: Miniforge3
+          use-mamba: true
+          environment-file: environment.yml
+          activate-environment: update-m32
+          python-version: 3.10
+          auto-update-conda: false
 
       - name: Lint with flake8
         shell: bash -l {0}
         run: |
-          conda install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -102,11 +111,15 @@ jobs:
       - name: Build with pyinstaller
         shell: bash -l {0}
         run: |
-          pyinstaller --clean -y --onefile --add-data "${{ matrix.assets }}" src/update_m32.py
+          pyinstaller --clean -y --onefile \
+            --collect-all esptool \
+            --add-data "${{ matrix.add_data1 }}" \
+            --add-data "${{ matrix.add_data2 }}" \
+            src/update_m32.py
 
       - name: Zip build artifacts for macos and ubuntu
         shell: bash -l {0}
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir archive
           zip -j ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip ./dist/${{ matrix.exe_name }} 
