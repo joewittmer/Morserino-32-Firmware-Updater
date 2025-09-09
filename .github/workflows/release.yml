@@ -40,7 +40,7 @@ jobs:
             target: macos
             type: cli
             conda_path: $CONDA/bin
-            assets: src/m32/*.bin:bin/
+            assets: src/m32/*.bin:bin/,src/m32pocket/*.bin:bin/
             exe_name: update_m32
             mime: application/zip
 
@@ -49,7 +49,7 @@ jobs:
             target: ubuntu
             type: cli
             conda_path: $CONDA/bin
-            assets: src/m32/*.bin:bin/
+            assets: src/m32/*.bin:bin/,src/m32pocket/*.bin:bin/
             exe_name: update_m32
             mime: application/zip
 
@@ -58,7 +58,7 @@ jobs:
             target: windows
             type: cli
             conda_path: $CONDA/Scripts
-            assets: src/m32/*.bin;bin/
+            assets: src/m32/*.bin;bin/;src/m32pocket/*.bin;bin/
             exe_name: update_m32.exe
             mime: application/zip
     steps:
