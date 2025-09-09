@@ -1,1 +1,4 @@
-pyinstaller --clean -y --onefile --add-data "src/m32/*.bin:bin/" --add-data "src/m32pocket/*.bin:bin/" src/update_m32.py
+pyinstaller --clean -y --onefile \
+		--add-data "src/m32/*.bin:m32/" \
+		--add-data "src/m32pocket/*.bin:m32pocket/" \
+	src/update_m32.py

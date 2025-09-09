@@ -40,7 +40,8 @@ jobs:
             target: macos
             type: cli
             conda_path: $CONDA/bin
-            assets: src/m32/*.bin:bin/,src/m32pocket/*.bin:bin/
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32/
             exe_name: update_m32
             mime: application/zip
 
@@ -49,7 +50,8 @@ jobs:
             target: ubuntu
             type: cli
             conda_path: $CONDA/bin
-            assets: src/m32/*.bin:bin/,src/m32pocket/*.bin:bin/
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32/
             exe_name: update_m32
             mime: application/zip
 
@@ -58,7 +60,8 @@ jobs:
             target: windows
             type: cli
             conda_path: $CONDA/Scripts
-            assets: src/m32/*.bin;bin/;src/m32pocket/*.bin;bin/
+            add_data1: src/m32/*.bin;m32/
+            add_data2: src/m32pocket/*.bin;m32pocket/
             exe_name: update_m32.exe
             mime: application/zip
     steps:
@@ -102,7 +105,10 @@ jobs:
       - name: Build with pyinstaller
         shell: bash -l {0}
         run: |
-          pyinstaller --clean -y --onefile --add-data "${{ matrix.assets }}" src/update_m32.py
+          pyinstaller --clean -y --onefile \
+            --add-data "${{ matrix.add_data1 }}" \
+            --add-data "${{ matrix.add_data2 }}" \
+            src/update_m32.py
 
       - name: Zip build artifacts for macos and ubuntu
         shell: bash -l {0}
