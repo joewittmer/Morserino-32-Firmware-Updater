@@ -200,7 +200,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.port is None or args.file is None:
-        show_error(app, "Missing required command line arguements.")
+        show_error(app, "Missing required command line arguments.")
     else:
         main(
             app,

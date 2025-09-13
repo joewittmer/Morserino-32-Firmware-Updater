@@ -176,7 +176,7 @@ class Morserino(object):
     def get_info(self, callback=lambda: SocInfo()):
         def bad_port_exception():
             raise CustomException(
-                "Error connecting to morserino.%s%sPlease check the port is correct."
+                "Error connecting to Morserino.%s%sPlease check the port is correct."
                 % (os.linesep, os.linesep)
             )
 
@@ -215,7 +215,7 @@ class Morserino(object):
 
         if not eraseFirmwareParser.result:
             raise CustomException(
-                "Error erasing morserino.%s%sPlease ask for assistance"
+                "Error erasing Morserino.%s%sPlease ask for assistance"
                 % (os.linesep, os.linesep)
             )
 
@@ -236,6 +236,6 @@ class Morserino(object):
 
         if not updateFirmwareParser.result:
             raise CustomException(
-                "Error updating morserino.%s%sPlease ask for assistance"
+                "Error updating Morserino.%s%sPlease ask for assistance"
                 % (os.linesep, os.linesep)
             )
