@@ -24,7 +24,7 @@ class Morserino(object):
             self.model = "M32"
             self.chip = "esp32"
 
-    self.update_command = self.__get_update_command(port, baud, path, flash_mode, flash_freq)
+        self.update_command = self.__get_update_command(port, baud, path, flash_mode, flash_freq)
         self.erase_command = self.__get_erase_command(port, baud)
         self.info_command = self.__get_info_command(port, baud)
         self.image_info_command = self.__get_image_info_command(port, baud, path)
