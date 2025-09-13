@@ -108,6 +108,14 @@ def create_args_parser(app_version):
         type=str,
         help="Specify the path to the firmware .bin file to upload.",
     )
+    required.add_argument(
+        "-d",
+        "--device",
+        type=str,
+        choices=["M32", "M32Pocket"],
+        default="M32",
+        help="Select target device type: M32 (esp32) or M32Pocket (esp32s3). Default is M32.",
+    )
 
     optional = parser.add_argument_group("Optional arguments")
     optional.add_argument(
@@ -116,14 +124,6 @@ def create_args_parser(app_version):
         type=str,
         default="921600",
         help="Include to set baud rate when updating. Valid options are 115200, 460800, or 921600. Default is 921600.",
-    )
-    optional.add_argument(
-        "-d",
-        "--device",
-        type=str,
-        choices=["M32", "M32Pocket"],
-        default="M32",
-        help="Select target device type: M32 (esp32) or M32Pocket (esp32s3). Default is M32.",
     )
     optional.add_argument(
         "-e",
