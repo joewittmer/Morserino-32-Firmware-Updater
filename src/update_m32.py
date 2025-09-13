@@ -132,10 +132,22 @@ def create_args_parser(app_version):
         default=False,
         help="Include to erase all content and settings to factory defaults.",
     )
+    optional.add_argument(
+        "--flash_mode",
+        type=str,
+        default=None,
+        help="Optional: Set flash mode (e.g., dio, qio). M32 default is dio. M32Pocket default is qio.",
+    )
+    optional.add_argument(
+        "--flash_freq",
+        type=str,
+        default=None,
+        help="Optional: Set flash frequency (e.g., 40m, 80m). Default is 80m",
+    )
     return parser
 
 
-def main(app, port, baud, path, eraseFlash, device):
+def main(app, port, baud, path, eraseFlash, device, flash_mode=None, flash_freq=None):
 
     starting_update = "Starting update"
     verifying_firmware = "Verifying firmware"
@@ -190,4 +202,13 @@ if __name__ == "__main__":
     if args.port is None or args.file is None:
         show_error(app, "Missing required command line arguements.")
     else:
-        main(app, args.port, args.baud, args.file, args.erase, args.device)
+        main(
+            app,
+            args.port,
+            args.baud,
+            args.file,
+            args.erase,
+            args.device,
+            getattr(args, "flash_mode", None),
+            getattr(args, "flash_freq", None),
+        )

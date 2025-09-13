@@ -14,7 +14,7 @@ from update_firmware_message_parser import UpdateFirmwareMessageParser
 
 
 class Morserino(object):
-    def __init__(self, port, baud, path, model="M32"):
+    def __init__(self, port, baud, path, model="M32", flash_mode=None, flash_freq=None):
 
         model_key = (model or "M32").lower()
         if "pocket" in model_key or "s3" in model_key:
@@ -24,15 +24,13 @@ class Morserino(object):
             self.model = "M32"
             self.chip = "esp32"
 
-        self.update_command = self.__get_update_command(port, baud, path)
+    self.update_command = self.__get_update_command(port, baud, path, flash_mode, flash_freq)
         self.erase_command = self.__get_erase_command(port, baud)
         self.info_command = self.__get_info_command(port, baud)
         self.image_info_command = self.__get_image_info_command(port, baud, path)
 
-    def __get_update_command(self, port, baud, path):
+    def __get_update_command(self, port, baud, path, flash_mode_override=None, flash_freq_override=None):
         if self.model == "M32":
-            # When bundled with PyInstaller we place files in sys._MEIPASS/m32/
-            # so use the folder name relative to the bundle root.
             res_folder = "m32"
             otadata = get_resource_path(res_folder + "/boot_app0.bin")
             bootloader = get_resource_path(res_folder + "/bootloader_qio_80m.bin")
@@ -44,25 +42,26 @@ class Morserino(object):
             partitionTable = get_resource_path(res_folder + "/partitions.bin")
 
         app = path
-        # Offsets differ between M32 (esp32) and M32Pocket (esp32s3 / M32-p)
-        # Keep existing offsets for M32. For M32Pocket use the offsets provided.
         if self.model == "M32":
             otadata_offset = "0xe000"
             bootloader_offset = "0x1000"
             app_offset = "0x10000"
             partition_offset = "0x8000"
-            # Flash parameters for ESP32
             flash_mode = "dio"
             flash_freq = "80m"
         else:
-            # M32Pocket (ESP32-S3)
             otadata_offset = "0xe000"
             bootloader_offset = "0x0"
             app_offset = "0x10000"
             partition_offset = "0x8000"
-            # Defaults for S3; verify your board's flash type and freq and change if necessary
             flash_mode = "qio"
             flash_freq = "80m"
+
+        # Override with user-supplied values if provided
+        if flash_mode_override:
+            flash_mode = flash_mode_override
+        if flash_freq_override:
+            flash_freq = flash_freq_override
 
         return [
             "--chip",
