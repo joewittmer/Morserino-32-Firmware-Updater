@@ -1,4 +1,4 @@
-__version__ = "0.0.9a"
+__version__ = "0.0.9b"
 
 import argparse
 import os
