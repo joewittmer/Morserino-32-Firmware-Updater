@@ -136,7 +136,7 @@ def create_args_parser(app_version):
         "--flash_mode",
         type=str,
         default=None,
-        help="Optional: Set flash mode (e.g., dio, qio). M32 default is dio. M32Pocket default is qio.",
+        help="Optional: Set flash mode (e.g., dio, qio). M32 default is dio. M32Pocket default is dio.",
     )
     optional.add_argument(
         "--flash_freq",

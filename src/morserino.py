@@ -51,10 +51,10 @@ class Morserino(object):
             flash_freq = "80m"
         else:
             otadata_offset = "0xe000"
-            bootloader_offset = "0x0"
+            bootloader_offset = "0x0000"
             app_offset = "0x10000"
             partition_offset = "0x8000"
-            flash_mode = "qio"
+            flash_mode = "dio"
             flash_freq = "80m"
 
         # Override with user-supplied values if provided
