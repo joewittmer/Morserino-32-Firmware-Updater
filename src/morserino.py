@@ -80,6 +80,8 @@ class Morserino(object):
             flash_mode,
             "--flash_freq",
             flash_freq,
+            "--flash_size",
+            "8MB",
             otadata_offset,
             otadata,
             bootloader_offset,
