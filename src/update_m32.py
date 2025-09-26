@@ -144,10 +144,16 @@ def create_args_parser(app_version):
         default=None,
         help="Optional: Set flash frequency (e.g., 40m, 80m). Default is 80m",
     )
+    optional.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="When set, show all esptool communication exchanged with the device (useful for debugging).",
+    )
     return parser
 
 
-def main(app, port, baud, path, eraseFlash, device, flash_mode=None, flash_freq=None):
+def main(app, port, baud, path, eraseFlash, device, flash_mode=None, flash_freq=None, verbose=False):
 
     starting_update = "Starting update"
     verifying_firmware = "Verifying firmware"
@@ -163,7 +169,7 @@ def main(app, port, baud, path, eraseFlash, device, flash_mode=None, flash_freq=
     firmware_update_success = "Firmware was updated successfully."
 
     try:
-        morserino = Morserino(port, baud, path, model=device)
+        morserino = Morserino(port, baud, path, model=device, verbose=verbose)
 
         show_updating(starting_update, path, port, baud)
 
@@ -211,4 +217,5 @@ if __name__ == "__main__":
             args.device,
             getattr(args, "flash_mode", None),
             getattr(args, "flash_freq", None),
+            getattr(args, "verbose", False),
         )

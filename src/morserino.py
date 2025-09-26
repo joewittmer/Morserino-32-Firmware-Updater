@@ -14,7 +14,7 @@ from update_firmware_message_parser import UpdateFirmwareMessageParser
 
 
 class Morserino(object):
-    def __init__(self, port, baud, path, model="M32", flash_mode=None, flash_freq=None):
+    def __init__(self, port, baud, path, model="M32", flash_mode=None, flash_freq=None, verbose=False):
 
         model_key = (model or "M32").lower()
         if "pocket" in model_key or "s3" in model_key:
@@ -23,11 +23,15 @@ class Morserino(object):
         else:
             self.model = "M32"
             self.chip = "esp32"
+        self.verbose = bool(verbose)
+        self.port = port
+        self.baud = str(baud)
+        self.path = path
 
-        self.update_command = self.__get_update_command(port, baud, path, flash_mode, flash_freq)
-        self.erase_command = self.__get_erase_command(port, baud)
-        self.info_command = self.__get_info_command(port, baud)
-        self.image_info_command = self.__get_image_info_command(port, baud, path)
+        self.update_command = self.__get_update_command(self.port, self.baud, self.path, flash_mode, flash_freq)
+        self.erase_command = self.__get_erase_command(self.port, self.baud)
+        self.info_command = self.__get_info_command(self.port, self.baud)
+        self.image_info_command = self.__get_image_info_command(self.port, self.baud, self.path)
 
     def __get_update_command(self, port, baud, path, flash_mode_override=None, flash_freq_override=None):
         if self.model == "M32":
@@ -57,7 +61,6 @@ class Morserino(object):
             flash_mode = "dio"
             flash_freq = "80m"
 
-        # Override with user-supplied values if provided
         if flash_mode_override:
             flash_mode = flash_mode_override
         if flash_freq_override:
@@ -149,9 +152,21 @@ class Morserino(object):
 
         imageInfoValidationParser = ImageInfoValidationParser()
         save_stdout = sys.stdout
-        sys.stdout = StdoutParser(imageInfoValidationParser.parse)
-
+        sys.stdout = StdoutParser(
+            imageInfoValidationParser.parse, echo=self.verbose, real_stdout=save_stdout
+        )
         try:
+            # When verbose is enabled, show the exact esptool command on the real stdout
+            if self.verbose:
+                try:
+                    print(
+                        "> cmd: " + " ".join(self.image_info_command),
+                        file=save_stdout,
+                    )
+                except Exception:
+                    # Fallback: don't crash if printing fails for some reason
+                    pass
+
             esptool.main(self.image_info_command)
 
         except Exception as ex:
@@ -185,9 +200,18 @@ class Morserino(object):
         socInfo = SocInfo()
         socInfoMessageParser = SocInfoMessageParser(socInfo)
         save_stdout = sys.stdout
-        sys.stdout = StdoutParser(socInfoMessageParser.parse)
-
+        sys.stdout = StdoutParser(socInfoMessageParser.parse, echo=self.verbose, real_stdout=save_stdout)
         try:
+            # When verbose is enabled, show the exact esptool command on the real stdout
+            if self.verbose:
+                try:
+                    print(
+                        "> cmd: " + " ".join(self.info_command),
+                        file=save_stdout,
+                    )
+                except Exception:
+                    pass
+
             esptool.main(self.info_command)
 
         except Exception:
@@ -207,6 +231,18 @@ class Morserino(object):
 
         try:
             sys.stdout = process_stdout
+
+            # When verbose is enabled, print the command to the saved stdout so it
+            # is visible even though sys.stdout has been redirected.
+            if self.verbose:
+                try:
+                    print(
+                        "> cmd: " + " ".join(self.erase_command),
+                        file=stdout,
+                    )
+                except Exception:
+                    pass
+
             esptool.main(self.erase_command)
 
         except Exception as ex:
@@ -224,10 +260,22 @@ class Morserino(object):
     def update(self, callback):
         stdout = sys.stdout
         updateFirmwareParser = UpdateFirmwareMessageParser(callback, sys.stdout)
-        process_stdout = StdoutParser(updateFirmwareParser.parse)
+        process_stdout = StdoutParser(updateFirmwareParser.parse, echo=self.verbose, real_stdout=stdout)
 
         try:
             sys.stdout = process_stdout
+
+            # When verbose is enabled, print the command to the saved stdout so it
+            # is visible even though sys.stdout has been redirected.
+            if self.verbose:
+                try:
+                    print(
+                        "> cmd: " + " ".join(self.update_command),
+                        file=stdout,
+                    )
+                except Exception:
+                    pass
+
             esptool.main(self.update_command)
 
         except Exception as ex:
