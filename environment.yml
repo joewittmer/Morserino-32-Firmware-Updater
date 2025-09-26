@@ -3,6 +3,6 @@ channels:
 - conda-forge
 dependencies:
 - python=3.9
-- esptool=4.5
+- esptool=5.1.0
 - pyserial=3.5
-- pyinstaller=4.5.1
+- pyinstaller=6.16.0
