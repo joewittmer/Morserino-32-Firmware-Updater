@@ -82,14 +82,14 @@ class Morserino(object):
             flash_freq,
             "--flash_size",
             "8MB",
-            otadata_offset,
-            otadata,
             bootloader_offset,
             bootloader,
-            app_offset,
-            app,
             partition_offset,
             partitionTable,
+            otadata_offset,
+            otadata,
+            app_offset,
+            app
         ]
 
     def __get_erase_command(self, port, baud):
