@@ -8,4 +8,4 @@ dependencies:
 - pip:
   - pyserial==3.5
   - esptool==4.9.0
-  - pyinstaller==6.0.0
+  - pyinstaller==6.16.0
