@@ -17,7 +17,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-14
+          - macos-13
           - windows-latest
           
     runs-on: ${{ matrix.os }}
@@ -28,21 +29,17 @@ jobs:
 
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v3
-
-      - name: Create environment
-        shell: bash -l {0}
-        run: |
-          conda env update --file environment.yml
-
-      - name: Activate environment
-        shell: bash -l {0}
-        run: |
-          conda activate update-m32
+        with:
+          miniforge-variant: Miniforge3
+          use-mamba: true
+          environment-file: environment.yml
+          activate-environment: update-m32
+          python-version: 3.10
+          auto-update-conda: false
 
       - name: Lint with flake8
         shell: bash -l {0}
         run: |
-          conda install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
