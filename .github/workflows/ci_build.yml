@@ -17,44 +17,29 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-14
+          - macos-13
           - windows-latest
           
     runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
 
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: 3.7
-
-      - name: Fix conda permissions on macOS
-        if: matrix.os == 'macos-latest'
-        run: sudo chown -R $UID $CONDA
-
-      - name: Add conda to *nix system path
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
-        shell: bash -l {0}
-        run: |
-          echo $CONDA/bin >> $GITHUB_PATH
-
-      - name: Add conda to windows system path
-        if: matrix.os == 'windows-latest'
-        shell: bash -l {0}
-        run: |
-          echo $CONDA/Scripts >> $GITHUB_PATH
-
-      - name: Update base environment
-        shell: bash -l {0}
-        run: |
-          conda env update --file environment.yml --name base
+          miniforge-variant: Miniforge3
+          use-mamba: true
+          environment-file: environment.yml
+          activate-environment: update-m32
+          python-version: 3.10
+          auto-update-conda: false
 
       - name: Lint with flake8
         shell: bash -l {0}
         run: |
-          conda install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
