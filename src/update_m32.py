@@ -1,4 +1,4 @@
-__version__ = "0.0.9f"
+__version__ = "0.1.1"
 
 import argparse
 import os
@@ -153,7 +153,17 @@ def create_args_parser(app_version):
     return parser
 
 
-def main(app, port, baud, path, eraseFlash, device, flash_mode=None, flash_freq=None, verbose=False):
+def main(
+    app,
+    port,
+    baud,
+    path,
+    eraseFlash,
+    device,
+    flash_mode=None,
+    flash_freq=None,
+    verbose=False,
+):
 
     starting_update = "Starting update"
     verifying_firmware = "Verifying firmware"
