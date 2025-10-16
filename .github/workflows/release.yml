@@ -27,6 +27,7 @@ jobs:
         with:
           name: release_url
           path: release_url.txt
+          overwrite: true
 
   build:
     name: Build packages
@@ -135,8 +136,10 @@ jobs:
       - name: Upload artifacts to workspace
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          # Artifact names must be unique per workflow run in v4
+          name: ${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}
           path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
+          overwrite: true
       
       - name: Load Release URL File from release job
         uses: actions/download-artifact@v4
