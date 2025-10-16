@@ -1,9 +1,11 @@
 name: update-m32
 channels:
 - conda-forge
-- defaults
 dependencies:
-- python=3.7
-- esptool=2.8
-- pyserial=3.5
-- pyinstaller=4.5.1
+- python=3.10
+- pip
+- flake8
+- pip:
+  - pyserial==3.5
+  - esptool==4.9.0
+  - pyinstaller==6.16.0

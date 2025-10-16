@@ -1,4 +1,4 @@
-__version__ = "0.0.8"
+__version__ = "0.0.9f"
 
 import argparse
 import os
@@ -108,6 +108,14 @@ def create_args_parser(app_version):
         type=str,
         help="Specify the path to the firmware .bin file to upload.",
     )
+    required.add_argument(
+        "-d",
+        "--device",
+        type=str,
+        choices=["M32", "M32Pocket"],
+        default="M32",
+        help="Select target device type: M32 (esp32) or M32Pocket (esp32s3). Default is M32.",
+    )
 
     optional = parser.add_argument_group("Optional arguments")
     optional.add_argument(
@@ -124,10 +132,28 @@ def create_args_parser(app_version):
         default=False,
         help="Include to erase all content and settings to factory defaults.",
     )
+    optional.add_argument(
+        "--flash_mode",
+        type=str,
+        default=None,
+        help="Optional: Set flash mode (e.g., dio, qio). M32 default is dio. M32Pocket default is dio.",
+    )
+    optional.add_argument(
+        "--flash_freq",
+        type=str,
+        default=None,
+        help="Optional: Set flash frequency (e.g., 40m, 80m). Default is 80m",
+    )
+    optional.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="When set, show all esptool communication exchanged with the device (useful for debugging).",
+    )
     return parser
 
 
-def main(app, port, baud, path, eraseFlash):
+def main(app, port, baud, path, eraseFlash, device, flash_mode=None, flash_freq=None, verbose=False):
 
     starting_update = "Starting update"
     verifying_firmware = "Verifying firmware"
@@ -143,7 +169,7 @@ def main(app, port, baud, path, eraseFlash):
     firmware_update_success = "Firmware was updated successfully."
 
     try:
-        morserino = Morserino(port, baud, path)
+        morserino = Morserino(port, baud, path, model=device, verbose=verbose)
 
         show_updating(starting_update, path, port, baud)
 
@@ -179,7 +205,17 @@ if __name__ == "__main__":
     parser = create_args_parser(__version__)
     args = parser.parse_args()
 
-    if args.port is None or args.baud is None:
-        show_error(app, "Missing required command line arguements.")
+    if args.port is None or args.file is None:
+        show_error(app, "Missing required command line arguments.")
     else:
-        main(app, args.port, args.baud, args.file, args.erase)
+        main(
+            app,
+            args.port,
+            args.baud,
+            args.file,
+            args.erase,
+            args.device,
+            getattr(args, "flash_mode", None),
+            getattr(args, "flash_freq", None),
+            getattr(args, "verbose", False),
+        )

@@ -23,7 +23,7 @@ jobs:
       - name: Output Release URL File
         run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
       - name: Save Release URL File for publish
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: release_url
           path: release_url.txt
@@ -35,12 +35,23 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-latest
+          - os: macos-14
             app: update_m32
-            target: macos
+            target: macos-arm64
             type: cli
             conda_path: $CONDA/bin
-            assets: src/bin/*.bin:bin/
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32pocket/
+            exe_name: update_m32
+            mime: application/zip
+
+          - os: macos-13
+            app: update_m32
+            target: macos-x86_64
+            type: cli
+            conda_path: $CONDA/bin
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32pocket/
             exe_name: update_m32
             mime: application/zip
 
@@ -49,7 +60,8 @@ jobs:
             target: ubuntu
             type: cli
             conda_path: $CONDA/bin
-            assets: src/bin/*.bin:bin/
+            add_data1: src/m32/*.bin:m32/
+            add_data2: src/m32pocket/*.bin:m32pocket/
             exe_name: update_m32
             mime: application/zip
 
@@ -58,37 +70,28 @@ jobs:
             target: windows
             type: cli
             conda_path: $CONDA/Scripts
-            assets: src/bin/*.bin;bin/
+            add_data1: src/m32/*.bin;m32/
+            add_data2: src/m32pocket/*.bin;m32pocket/
             exe_name: update_m32.exe
             mime: application/zip
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: 3.7
-
-      - name: Fix conda permissions on macOS
-        if: matrix.os == 'macos-latest'
-        shell: bash -l {0}
-        run: sudo chown -R $UID $CONDA
-
-      - name: Add conda to system path
-        shell: bash -l {0}
-        run: |
-          echo ${{ matrix.conda_path }} >> $GITHUB_PATH
-
-      - name: Setup base environment
-        shell: bash -l {0}
-        run: |
-          conda env update --file environment.yml --name base
+          miniforge-variant: Miniforge3
+          use-mamba: true
+          environment-file: environment.yml
+          activate-environment: update-m32
+          python-version: "3.10"
+          auto-update-conda: false
+          conda-remove-defaults: true
 
       - name: Lint with flake8
         shell: bash -l {0}
         run: |
-          conda install flake8
           # stop the build if there are Python syntax errors or undefined names
           flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -109,11 +112,15 @@ jobs:
       - name: Build with pyinstaller
         shell: bash -l {0}
         run: |
-          pyinstaller --clean -y --onefile --add-data "${{ matrix.assets }}" src/update_m32.py
+          pyinstaller --clean -y --onefile \
+            --collect-all esptool \
+            --add-data "${{ matrix.add_data1 }}" \
+            --add-data "${{ matrix.add_data2 }}" \
+            src/update_m32.py
 
       - name: Zip build artifacts for macos and ubuntu
         shell: bash -l {0}
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir archive
           zip -j ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip ./dist/${{ matrix.exe_name }} 
@@ -126,22 +133,23 @@ jobs:
           Compress-Archive -DestinationPath ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip -Path ./dist/${{ matrix.exe_name }}
 
       - name: Upload artifacts to workspace
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
       
       - name: Load Release URL File from release job
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: release_url
+          path: release_url
 
       - name: Get release file name and upload url
         id: get_release_info
         shell: bash
         run: |
-          value=`cat release_url/release_url.txt`
-          echo ::set-output name=upload_url::$value
+          value=$(cat release_url/release_url.txt)
+          echo "upload_url=$value" >> "$GITHUB_OUTPUT"
 
       - name: Upload release artifacts
         id: upload-release-asset
