@@ -23,7 +23,7 @@ jobs:
       - name: Output Release URL File
         run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
       - name: Save Release URL File for publish
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: release_url
           path: release_url.txt
@@ -76,7 +76,7 @@ jobs:
             mime: application/zip
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
 
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v3
@@ -85,8 +85,9 @@ jobs:
           use-mamba: true
           environment-file: environment.yml
           activate-environment: update-m32
-          python-version: 3.10
+          python-version: "3.10"
           auto-update-conda: false
+          conda-remove-defaults: true
 
       - name: Lint with flake8
         shell: bash -l {0}
@@ -132,22 +133,23 @@ jobs:
           Compress-Archive -DestinationPath ./archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip -Path ./dist/${{ matrix.exe_name }}
 
       - name: Upload artifacts to workspace
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: ${{ github.workspace }}/archive/${{ matrix.target }}-${{ matrix.type }}-${{ matrix.app }}-v${{ env.RELEASE_VERSION }}.zip
       
       - name: Load Release URL File from release job
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4
         with:
           name: release_url
+          path: release_url
 
       - name: Get release file name and upload url
         id: get_release_info
         shell: bash
         run: |
-          value=`cat release_url/release_url.txt`
-          echo ::set-output name=upload_url::$value
+          value=$(cat release_url/release_url.txt)
+          echo "upload_url=$value" >> "$GITHUB_OUTPUT"
 
       - name: Upload release artifacts
         id: upload-release-asset
